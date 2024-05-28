@@ -2,12 +2,11 @@ import streamlit as st
 import pyodbc
 
 def app():
-    server = '61.91.59.134'
-    port = '1544'
+    server = '192.168.1.19'
     database = 'KGETEST'
     db_username = 'sa'
     db_password = 'kg@dm1nUsr!'
-    conn_str = f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server},{port};DATABASE={database};UID={db_username};PWD={db_password}'
+    conn_str = f'DRIVER={{SQL Server}};SERVER={server};DATABASE={database};UID={db_username};PWD={db_password}'
 
     try:
         with pyodbc.connect(conn_str) as conn:
