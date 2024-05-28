@@ -7,7 +7,7 @@ def app():
     database = 'KGETEST'
     db_username = 'sa'
     db_password = 'kg@dm1nUsr!'
-    conn_str = f'DRIVER={{SQL Server}};SERVER={server},{port};DATABASE={database};UID={db_username};PWD={db_password}'
+    conn_str = f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server},{port};DATABASE={database};UID={db_username};PWD={db_password}'
 
     try:
         with pyodbc.connect(conn_str) as conn:
