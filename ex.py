@@ -9,11 +9,12 @@ import time
 
 st.set_page_config(layout="wide")
 
-server = '192.168.1.19'
+server = '61.91.59.134'
+port = '1544'
 database = 'KGETEST'
 db_username = 'sa'
 db_password = 'kg@dm1nUsr!'
-conn_str = f'DRIVER={{SQL Server}};SERVER={server};DATABASE={database};UID={db_username};PWD={db_password}'
+conn_str = f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server},{port};DATABASE={database};UID={db_username};PWD={db_password}'
 
 def check_credentials(username, password):
     user_db = {
