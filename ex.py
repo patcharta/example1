@@ -88,9 +88,12 @@ def check_credentials(username, password):
         'admin': 'adminpassword'
     }
     return user_db.get(username) == password
-    
+
 # Function to display the UI
 def display_ui():
+    if 'logged_in' not in st.session_state:
+        st.session_state.logged_in = False
+
     if st.session_state.logged_in:
         st.write(f"👨🏻‍💼👩🏻‍💼 รายการสินค้าที่ {st.session_state.username} นับ")
 
@@ -114,7 +117,7 @@ def display_ui():
 
             with establish_connection() as conn:
                 product_query = '''
-                SELECT x.ITMID, x.NAME_TH, x.MODEL, x.EDITDATE, q.BRAND_NAME
+                SELECT x.ITMID, x.NAME_TH, x.MODEL, x.                EDITDATE, q.BRAND_NAME
                 FROM ERP_ITEM_MASTER_DATA x
                 LEFT JOIN ERP_BRAND q ON x.BRAID = q.BRAID
                 WHERE x.EDITDATE IS NULL AND x.GRPID IN ('11', '71', '77', '73', '76', '75')
@@ -138,49 +141,49 @@ def display_ui():
 
                     if not filtered_items_df_positive_balance.empty:
                         # Select the required columns to display
-                            display_columns = [
-                                'CAB_NAME', 'SHE_NAME', 'BLK_NAME',
-                                'BATCH_NO', 'TOTAL_BALANCE'
-                            ]
-                            st.dataframe(filtered_items_df_positive_balance[display_columns])
+                        display_columns = [
+                            'CAB_NAME', 'SHE_NAME', 'BLK_NAME',
+                            'BATCH_NO', 'TOTAL_BALANCE'
+                        ]
+                        st.dataframe(filtered_items_df_positive_balance[display_columns])
 
-                            total_balance = filtered_items_df_positive_balance['TOTAL_BALANCE'].sum()
-                            st.write(f"รวมยอดสินค้าในคลัง: {total_balance}")
+                        total_balance = filtered_items_df_positive_balance['TOTAL_BALANCE'].sum()
+                        st.write(f"รวมยอดสินค้าในคลัง: {total_balance}")
 
-                            product_quantity = st.number_input(label='จำนวนสินค้า 🛒', min_value=0, value=st.session_state.product_quantity)
-                            remark = st.text_area('Remark', value=st.session_state.remark)
+                        product_quantity = st.number_input(label='จำนวนสินค้า 🛒', min_value=0, value=st.session_state.product_quantity)
+                        remark = st.text_area('Remark', value=st.session_state.remark)
 
-                            if st.button('👉 Enter') and product_quantity > 0:
-                                product_data = {
-                                    'Login_Time': st.session_state.login_time,
-                                    'Enter_By': st.session_state.username,
-                                    'Product_ID': str(filtered_items_df['ITMID'].iloc[0]),
-                                    'Product_Name': str(filtered_items_df['NAME_TH'].iloc[0]),
-                                    'Model': str(filtered_items_df['MODEL'].iloc[0]),
-                                    'Brand_Name': str(filtered_items_df['BRAND_NAME'].iloc[0]),
-                                    'Cabinet': str(filtered_items_df['CAB_NAME'].iloc[0]),
-                                    'Shelf': str(filtered_items_df['SHE_NAME'].iloc[0]),
-                                    'Block': str(filtered_items_df['BLK_NAME'].iloc[0]),
-                                    'Warehouse_ID': str(filtered_items_df['WHCID'].iloc[0]),
-                                    'Warehouse_Name': str(filtered_items_df['WAREHOUSE_NAME'].iloc[0]),
-                                    'Batch_No': str(filtered_items_df['BATCH_NO'].iloc[0]),
-                                    'Purchasing_UOM': str(filtered_items_df['PURCHASING_UOM'].iloc[0]),
-                                    'Total_Balance': int(total_balance),
-                                    'Quantity': int(product_quantity),
-                                    'Remark': remark
-                                }
-                                st.session_state.product_data.append(product_data)
-                                save_to_database(product_data, conn)
+                        if st.button('👉 Enter') and product_quantity > 0:
+                            product_data = {
+                                'Login_Time': st.session_state.login_time,
+                                'Enter_By': st.session_state.username,
+                                'Product_ID': str(filtered_items_df['ITMID'].iloc[0]),
+                                'Product_Name': str(filtered_items_df['NAME_TH'].iloc[0]),
+                                'Model': str(filtered_items_df['MODEL'].iloc[0]),
+                                'Brand_Name': str(filtered_items_df['BRAND_NAME'].iloc[0]),
+                                'Cabinet': str(filtered_items_df['CAB_NAME'].iloc[0]),
+                                'Shelf': str(filtered_items_df['SHE_NAME'].iloc[0]),
+                                'Block': str(filtered_items_df['BLK_NAME'].iloc[0]),
+                                'Warehouse_ID': str(filtered_items_df['WHCID'].iloc[0]),
+                                'Warehouse_Name': str(filtered_items_df['WAREHOUSE_NAME'].iloc[0]),
+                                'Batch_No': str(filtered_items_df['BATCH_NO'].iloc[0]),
+                                'Purchasing_UOM': str(filtered_items_df['PURCHASING_UOM'].iloc[0]),
+                                'Total_Balance': int(total_balance),
+                                'Quantity': int(product_quantity),
+                                'Remark': remark
+                            }
+                            st.session_state.product_data.append(product_data)
+                            save_to_database(product_data, conn)
 
-                                if st.session_state.product_data:
-                                    product_df = pd.DataFrame(st.session_state.product_data)
-                                    download_data(product_df, st.session_state.username, st.session_state.login_time)
+                            if st.session_state.product_data:
+                                product_df = pd.DataFrame(st.session_state.product_data)
+                                download_data(product_df, st.session_state.username, st.session_state.login_time)
 
-                                # Clear session state product data to prevent duplicates on next save
-                                st.session_state.product_data = []
-                                # Reset the input fields
-                                st.session_state.product_quantity = 0
-                                st.session_state.remark = ""
+                            # Clear session state product data to prevent duplicates on next save
+                            st.session_state.product_data = []
+                            # Reset the input fields
+                            st.session_state.product_quantity = 0
+                            st.session_state.remark = ""
 
                     else:
                         st.write("ไม่มีสินค้าที่มียอดเหลือในคลัง")
@@ -219,3 +222,4 @@ def display_ui():
 
 if __name__ == "__main__":
     display_ui()
+
