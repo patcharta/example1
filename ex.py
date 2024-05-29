@@ -77,6 +77,35 @@ def save_to_database(product_data):
     except pyodbc.Error as e:
         st.error(f"Error inserting data: {e}")
 
+def load_data(selected_product_name, selected_whcid):
+    with pyodbc.connect(conn_str) as conn_detail:
+        query_detail = '''
+        SELECT
+            a.ITMID, a.NAME_TH, a.PURCHASING_UOM, a.MODEL, 
+            b.BRAND_NAME, c.CAB_NAME, d.SHE_NAME, e.BLK_NAME,
+            p.WHCID, w.NAME_TH AS WAREHOUSE_NAME, p.BATCH_NO, SUM(p.BALANCE) AS TOTAL_BALANCE
+        FROM
+            ERP_ITEM_MASTER_DATA a
+            LEFT JOIN ERP_BRAND b ON a.BRAID = b.BRAID
+            LEFT JOIN ERP_CABINET c ON a.CABID = c.CABID
+            LEFT JOIN ERP_SHELF d ON a.SHEID = d.SHEID
+            LEFT JOIN ERP_BLOCK e ON a.BLKID = e.BLKID
+            LEFT JOIN ERP_GOODS_RECEIPT_PO_BATCH p ON a.ITMID = p.ITMID
+            LEFT JOIN ERP_WAREHOUSES_CODE w ON p.WHCID = w.WHCID
+        WHERE
+            a.EDITDATE IS NULL AND
+            a.GRPID IN ('11', '71', '77', '73', '76', '75') AND
+            a.ITMID + ' - ' + a.NAME_TH + ' - ' + a.MODEL = ? AND
+            p.WHCID = ?
+        GROUP BY
+            a.ITMID, a.NAME_TH, a.PURCHASING_UOM, a.MODEL, a.PHOTONAME,
+            b.BRAND_NAME, c.CAB_NAME, d.SHE_NAME, e.BLK_NAME,
+            p.WHCID, w.NAME_TH, p.BATCH_NO
+        '''
+
+        filtered_items_df = pd.read_sql(query_detail, conn_detail, params=(selected_product_name, selected_whcid.split(' -')[0]))
+        return filtered_items_df
+
 def app():
     if 'logged_in' not in st.session_state:
         st.session_state.logged_in = False
@@ -126,32 +155,7 @@ def app():
                 selected_brand_name = selected_item['BRAND_NAME'].iloc[0] if not selected_item.empty else ""
                 st.write(f"คุณเลือกสินค้า: {selected_product_name} - {selected_brand_name}")
 
-                with pyodbc.connect(conn_str) as conn_detail:
-                    query_detail = '''
-SELECT
-    a.ITMID, a.NAME_TH, a.PURCHASING_UOM, a.MODEL, 
-    b.BRAND_NAME, c.CAB_NAME, d.SHE_NAME, e.BLK_NAME,
-    p.WHCID, w.NAME_TH AS WAREHOUSE_NAME, p.BATCH_NO, SUM(p.BALANCE) AS TOTAL_BALANCE
-FROM
-    ERP_ITEM_MASTER_DATA a
-    LEFT JOIN ERP_BRAND b ON a.BRAID = b.BRAID
-    LEFT JOIN ERP_CABINET c ON a.CABID = c.CABID
-    LEFT JOIN ERP_SHELF d ON a.SHEID = d.SHEID
-    LEFT JOIN ERP_BLOCK e ON a.BLKID = e.BLKID
-    LEFT JOIN ERP_GOODS_RECEIPT_PO_BATCH p ON a.ITMID = p.ITMID
-    LEFT JOIN ERP_WAREHOUSES_CODE w ON p.WHCID = w.WHCID
-WHERE
-    a.EDITDATE IS NULL AND
-    a.GRPID IN ('11', '71', '77', '73', '76', '75') AND
-    a.ITMID + ' - ' + a.NAME_TH + ' - ' + a.MODEL = ? AND
-    p.WHCID = ?
-GROUP BY
-    a.ITMID, a.NAME_TH, a.PURCHASING_UOM, a.MODEL, a.PHOTONAME,
-    b.BRAND_NAME, c.CAB_NAME, d.SHE_NAME, e.BLK_NAME,
-    p.WHCID, w.NAME_TH, p.BATCH_NO
-'''
-
-                    filtered_items_df = pd.read_sql(query_detail, conn_detail, params=(selected_product_name, st.session_state.selected_whcid.split(' -')[0]))
+                filtered_items_df = load_data(selected_product_name, st.session_state.selected_whcid)
 
                 if not filtered_items_df.empty:
                     st.write("### รายละเอียดสินค้า:")
