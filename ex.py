@@ -51,7 +51,7 @@ def download_data(df, username, login_time):
     st.markdown(href, unsafe_allow_html=True)
 
 # Function to save data to the database
-def save_to_database(product_data_list):
+def save_to_database(product_data):
     try:
         query = '''
         INSERT INTO ERP_COUNT_STOCK (
@@ -65,15 +65,13 @@ def save_to_database(product_data_list):
             max_id = cursor.fetchone()[0]
             new_id = max_id + 1
 
-            for product_data in product_data_list:
-                data = [
-                    new_id,
-                    product_data['Login_Time'], product_data['Enter_By'], product_data['Product_ID'],
-                    product_data['Product_Name'], product_data['Purchasing_UOM'], product_data['Remark'],
-                    product_data['Total_Balance'], product_data['Quantity']
-                ]
-                cursor.execute(query, data)
-                new_id += 1
+            data = [
+                new_id,
+                product_data['Login_Time'], product_data['Enter_By'], product_data['Product_ID'],
+                product_data['Product_Name'], product_data['Purchasing_UOM'], product_data['Remark'],
+                product_data['Total_Balance'], product_data['Quantity']
+            ]
+            cursor.execute(query, data)
             conn.commit()
         st.success("Data saved successfully!")
     except pyodbc.Error as e:
@@ -194,7 +192,7 @@ GROUP BY
                                 'Remark': remark
                             }
                             st.session_state.product_data.append(product_data)
-                            save_to_database(st.session_state.product_data)
+                            save_to_database(product_data)
 
                             if st.session_state.product_data:
                                 product_df = pd.DataFrame(st.session_state.product_data)
