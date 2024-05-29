@@ -22,17 +22,19 @@ def check_credentials(username, password):
 
 def server(company):
     if company == 'K.G. Corporation Co.,Ltd.':
-        server = '192.168.1.19'
+        server = '61.91.59.134'
+        port = '1544'
         db_username = 'sa'
         db_password = 'kg@dm1nUsr!'
         database = 'KGETEST'
     elif company == 'The Chill Resort & Spa Co., Ltd.':
-        server = '192.168.1.19'
+        server = '61.91.59.134'
+        port = '1544'
         db_username = 'sa'
         db_password = 'kg@dm1nUsr!'
         database = 'THECHILL'
 
-    conn_str = f'DRIVER={{SQL Server}};SERVER={server};DATABASE={database};UID={db_username};PWD={db_password}'
+    conn_str = f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server},{port};DATABASE={database};UID={db_username};PWD={db_password}'
     return conn_str
 
 # Function to save data to the database
