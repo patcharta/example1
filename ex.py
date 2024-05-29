@@ -133,7 +133,7 @@ def login():
                 st.session_state.logged_in = True
                 st.session_state.username = username
                 timezone = pytz.timezone('Asia/Bangkok')
-                current_time = datetime.now(timezone).strftime("%Y-%m-%d %H:%M:S:%d:%d:%d):
+                current_time = datetime.now(timezone).strftime("%Y-%m-%d %H:%M:%S")
                 st.session_state.login_time = current_time
                 st.success(f"🎉🎉 Welcome {username}")
                 time.sleep(1)
