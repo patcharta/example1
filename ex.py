@@ -7,7 +7,6 @@ import base64
 import io
 import time
 import pytz
-from multiprocessing import Pool
 
 # Set page configuration
 st.set_page_config(layout="wide")
@@ -20,66 +19,6 @@ db_username = 'sa'
 db_password = 'kg@dm1nUsr!'
 conn_str = f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server},{port};DATABASE={database};UID={db_username};PWD={db_password}'
 
-# Function to establish database connection
-def establish_connection():
-    return pyodbc.connect(conn_str)
-
-# Function to load data from the database with caching
-@st.cache(allow_output_mutation=True, hash_funcs={pyodbc.Connection: id})
-def load_data(selected_product_name, selected_whcid, conn):
-    query_detail = '''
-    SELECT
-        a.ITMID, a.NAME_TH, a.PURCHASING_UOM, a.MODEL, 
-        b.BRAND_NAME, c.CAB_NAME, d.SHE_NAME, e.BLK_NAME,
-        p.WHCID, w.NAME_TH AS WAREHOUSE_NAME, p.BATCH_NO, SUM(p.BALANCE) AS TOTAL_BALANCE
-    FROM
-        ERP_ITEM_MASTER_DATA a
-        LEFT JOIN ERP_BRAND b ON a.BRAID = b.BRAID
-        LEFT JOIN ERP_CABINET c ON a.CABID = c.CABID
-        LEFT JOIN ERP_SHELF d ON a.SHEID = d.SHEID
-        LEFT JOIN ERP_BLOCK e ON a.BLKID = e.BLKID
-        LEFT JOIN ERP_GOODS_RECEIPT_PO_BATCH p ON a.ITMID = p.ITMID
-        LEFT JOIN ERP_WAREHOUSES_CODE w ON p.WHCID = w.WHCID
-    WHERE
-        a.EDITDATE IS NULL AND
-        a.GRPID IN ('11', '71', '77', '73', '76', '75') AND
-        a.ITMID + ' - ' + a.NAME_TH + ' - ' + a.MODEL = ? AND
-        p.WHCID = ?
-    GROUP BY
-        a.ITMID, a.NAME_TH, a.PURCHASING_UOM, a.MODEL, a.PHOTONAME,
-        b.BRAND_NAME, c.CAB_NAME, d.SHE_NAME, e.BLK_NAME,
-        p.WHCID, w.NAME_TH, p.BATCH_NO
-    '''
-
-    filtered_items_df = pd.read_sql(query_detail, conn, params=(selected_product_name, selected_whcid.split(' -')[0]))
-    return filtered_items_df
-
-# Function to save data to the database
-def save_to_database(product_data, conn):
-    try:
-        query = '''
-        INSERT INTO ERP_COUNT_STOCK (
-            ID, LOGDATE, ENTERBY, ITMID, ITEMNAME, UNIT, REMARK, ACTUAL, INSTOCK
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        '''
-
-        cursor = conn.cursor()
-        cursor.execute("SELECT ISNULL(MAX(ID), 0) FROM ERP_COUNT_STOCK")
-        max_id = cursor.fetchone()[0]
-        new_id = max_id + 1
-
-        data = [
-            new_id,
-            product_data['Login_Time'], product_data['Enter_By'], product_data['Product_ID'],
-            product_data['Product_Name'], product_data['Purchasing_UOM'], product_data['Remark'],
-            product_data['Total_Balance'], product_data['Quantity']
-        ]
-        cursor.execute(query, data)
-        conn.commit()
-        st.success("Data saved successfully!")
-    except pyodbc.Error as e:
-        st.error(f"Error inserting data: {e}")
-
 # Function to check user credentials
 def check_credentials(username, password):
     user_db = {
@@ -89,17 +28,101 @@ def check_credentials(username, password):
     }
     return user_db.get(username) == password
 
-# Function to display the UI
-def display_ui():
+# Function to create a download link for the data
+def download_data(df, username, login_time):
+    output = io.BytesIO()
+    writer = pd.ExcelWriter(output, engine='xlsxwriter')
+
+    login_info = pd.DataFrame({
+        'Username': [username],
+        'Login Time': [login_time]
+    })
+    login_info.to_excel(writer, index=False, sheet_name='LoginInfo')
+
+    df.to_excel(writer, index=False, sheet_name='ProductData')
+    writer.close()
+    processed_data = output.getvalue()
+
+    b64 = base64.b64encode(processed_data).decode()
+    today = datetime.today().strftime('%Y-%m-%d %H-%M-%S')
+    filename = f"product_data_{username}_{today}.xlsx"
+
+    href = f'<a href="data:application/octet-stream;base64,{b64}" download="{filename}">🚚🛒🚛📂</a>'
+    st.markdown(href, unsafe_allow_html=True)
+
+# Function to save data to the database
+def save_to_database(product_data):
+    try:
+        query = '''
+        INSERT INTO ERP_COUNT_STOCK (
+            ID, LOGDATE, ENTERBY, ITMID, ITEMNAME, UNIT, REMARK, ACTUAL, INSTOCK
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        '''
+
+        with pyodbc.connect(conn_str) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT ISNULL(MAX(ID), 0) FROM ERP_COUNT_STOCK")
+            max_id = cursor.fetchone()[0]
+            new_id = max_id + 1
+
+            data = [
+                new_id,
+                product_data['Login_Time'], product_data['Enter_By'], product_data['Product_ID'],
+                product_data['Product_Name'], product_data['Purchasing_UOM'], product_data['Remark'],
+                product_data['Total_Balance'], product_data['Quantity']
+            ]
+            cursor.execute(query, data)
+            conn.commit()
+        st.success("Data saved successfully!")
+    except pyodbc.Error as e:
+        st.error(f"Error inserting data: {e}")
+
+def load_data(selected_product_name, selected_whcid):
+    with pyodbc.connect(conn_str) as conn_detail:
+        query_detail = '''
+        SELECT
+            a.ITMID, a.NAME_TH, a.PURCHASING_UOM, a.MODEL, 
+            b.BRAND_NAME, c.CAB_NAME, d.SHE_NAME, e.BLK_NAME,
+            p.WHCID, w.NAME_TH AS WAREHOUSE_NAME, p.BATCH_NO, SUM(p.BALANCE) AS TOTAL_BALANCE
+        FROM
+            ERP_ITEM_MASTER_DATA a
+            LEFT JOIN ERP_BRAND b ON a.BRAID = b.BRAID
+            LEFT JOIN ERP_CABINET c ON a.CABID = c.CABID
+            LEFT JOIN ERP_SHELF d ON a.SHEID = d.SHEID
+            LEFT JOIN ERP_BLOCK e ON a.BLKID = e.BLKID
+            LEFT JOIN ERP_GOODS_RECEIPT_PO_BATCH p ON a.ITMID = p.ITMID
+            LEFT JOIN ERP_WAREHOUSES_CODE w ON p.WHCID = w.WHCID
+        WHERE
+            a.EDITDATE IS NULL AND
+            a.GRPID IN ('11', '71', '77', '73', '76', '75') AND
+            a.ITMID + ' - ' + a.NAME_TH + ' - ' + a.MODEL = ? AND
+            p.WHCID = ?
+        GROUP BY
+            a.ITMID, a.NAME_TH, a.PURCHASING_UOM, a.MODEL, a.PHOTONAME,
+            b.BRAND_NAME, c.CAB_NAME, d.SHE_NAME, e.BLK_NAME,
+            p.WHCID, w.NAME_TH, p.BATCH_NO
+        '''
+
+        filtered_items_df = pd.read_sql(query_detail, conn_detail, params=(selected_product_name, selected_whcid.split(' -')[0]))
+        return filtered_items_df
+
+def app():
     if 'logged_in' not in st.session_state:
         st.session_state.logged_in = False
+        st.session_state.username = ''
+        st.session_state.login_time = ''
+        st.session_state.selected_whcid = None
+        st.session_state.selected_product_name = None
+        st.session_state.product_data = []
+        st.session_state.product_quantity = 0
+        st.session_state.remark = ""
 
     if st.session_state.logged_in:
         st.write(f"👨🏻‍💼👩🏻‍💼 รายการสินค้าที่ {st.session_state.username} นับ")
 
         if st.session_state.selected_whcid is None:
             st.subheader("เลือก WHCID")
-            with establish_connection() as conn:
+            with pyodbc.connect(conn_str) as conn:
                 whcid_query = '''
                 SELECT y.WHCID, y.NAME_TH
                 FROM ERP_WAREHOUSES_CODE y
@@ -115,9 +138,9 @@ def display_ui():
 
             st.subheader("ค้นหาสินค้า")
 
-            with establish_connection() as conn:
+            with pyodbc.connect(conn_str) as conn:
                 product_query = '''
-                SELECT x.ITMID, x.NAME_TH, x.MODEL, x.                EDITDATE, q.BRAND_NAME
+                SELECT x.ITMID, x.NAME_TH, x.MODEL, x.EDITDATE, q.BRAND_NAME
                 FROM ERP_ITEM_MASTER_DATA x
                 LEFT JOIN ERP_BRAND q ON x.BRAID = q.BRAID
                 WHERE x.EDITDATE IS NULL AND x.GRPID IN ('11', '71', '77', '73', '76', '75')
@@ -132,7 +155,7 @@ def display_ui():
                 selected_brand_name = selected_item['BRAND_NAME'].iloc[0] if not selected_item.empty else ""
                 st.write(f"คุณเลือกสินค้า: {selected_product_name} - {selected_brand_name}")
 
-                filtered_items_df = load_data(selected_product_name, st.session_state.selected_whcid, conn)
+                filtered_items_df = load_data(selected_product_name, st.session_state.selected_whcid)
 
                 if not filtered_items_df.empty:
                     st.write("### รายละเอียดสินค้า:")
@@ -173,7 +196,7 @@ def display_ui():
                                 'Remark': remark
                             }
                             st.session_state.product_data.append(product_data)
-                            save_to_database(product_data, conn)
+                            save_to_database(product_data)
 
                             if st.session_state.product_data:
                                 product_df = pd.DataFrame(st.session_state.product_data)
@@ -221,5 +244,4 @@ def display_ui():
                 st.error("Invalid username or password")
 
 if __name__ == "__main__":
-    display_ui()
-
+    app()
