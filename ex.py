@@ -106,7 +106,7 @@ def load_data(selected_product_name, selected_whcid):
         filtered_items_df = pd.read_sql(query_detail, conn_detail, params=(selected_product_name, selected_whcid.split(' -')[0]))
         return filtered_items_df
 
-def login():
+def app():
     if 'logged_in' not in st.session_state:
         st.session_state.logged_in = False
         st.session_state.username = ''
@@ -119,8 +119,110 @@ def login():
 
     if st.session_state.logged_in:
         st.write(f"👨🏻‍💼👩🏻‍💼 รายการสินค้าที่ {st.session_state.username} นับ")
-        
-        # Add your code related to logged in users here
+
+        if st.session_state.selected_whcid is None:
+            st.subheader("เลือก WHCID")
+            with pyodbc.connect(conn_str) as conn:
+                whcid_query = '''
+                SELECT y.WHCID, y.NAME_TH
+                FROM ERP_WAREHOUSES_CODE y
+                WHERE y.EDITDATE IS NULL
+                '''
+                whcid_df = pd.read_sql(whcid_query, conn)
+                selected_whcid = st.selectbox("เลือก WHCID:", options=whcid_df['WHCID'] + ' - ' + whcid_df['NAME_TH'])
+
+                if st.button("👉 Enter WHCID"):
+                    st.session_state.selected_whcid = selected_whcid
+        else:
+            st.write(f"คุณเลือก WHCID: {st.session_state.selected_whcid}")
+
+            st.subheader("ค้นหาสินค้า")
+
+            with pyodbc.connect(conn_str) as conn:
+                product_query = '''
+                SELECT x.ITMID, x.NAME_TH, x.MODEL, x.EDITDATE, q.BRAND_NAME
+                FROM ERP_ITEM_MASTER_DATA x
+                LEFT JOIN ERP_BRAND q ON x.BRAID = q.BRAID
+                WHERE x.EDITDATE IS NULL AND x.GRPID IN ('11', '71', '77', '73', '76', '75')
+                '''
+                items_df = pd.read_sql(product_query, conn)
+
+            items_options = [None] + list(items_df['ITMID'] + ' - ' + items_df['NAME_TH'] + ' - ' + items_df['MODEL'])
+            selected_product_name = st.selectbox("เลือกสินค้า:", options=items_options, key='selected_product')
+
+            if selected_product_name:
+                selected_item = items_df[items_df['ITMID'] + ' - ' + items_df['NAME_TH'] + ' - ' + items_df['MODEL'] == selected_product_name]
+                selected_brand_name = selected_item['BRAND_NAME'].iloc[0] if not selected_item.empty else ""
+                st.write(f"คุณเลือกสินค้า: {selected_product_name} - {selected_brand_name}")
+
+                filtered_items_df = load_data(selected_product_name, st.session_state.selected_whcid)
+
+                if not filtered_items_df.empty:
+                    st.write("### รายละเอียดสินค้า:")
+                    # Filtered DataFrame where TOTAL_BALANCE > 0
+                    filtered_items_df_positive_balance = filtered_items_df[filtered_items_df['TOTAL_BALANCE'] > 0]
+
+                    if not filtered_items_df_positive_balance.empty:
+                        # Select the required columns to display
+                        display_columns = [
+                            'CAB_NAME', 'SHE_NAME', 'BLK_NAME',
+                            'BATCH_NO', 'TOTAL_BALANCE'
+                        ]
+                        st.dataframe(filtered_items_df_positive_balance[display_columns])
+
+                        total_balance = filtered_items_df_positive_balance['TOTAL_BALANCE'].sum()
+                        st.write(f"รวมยอดสินค้าในคลัง: {total_balance}")
+
+                        product_quantity = st.number_input(label='จำนวนสินค้า 🛒', min_value=0, value=st.session_state.product_quantity)
+                        remark = st.text_area('Remark', value=st.session_state.remark)
+
+                        if st.button('👉 Enter') and product_quantity > 0:
+                            product_data = {
+                                'Login_Time': st.session_state.login_time,
+                                'Enter_By': st.session_state.username,
+                                'Product_ID': str(filtered_items_df['ITMID'].iloc[0]),
+                                'Product_Name': str(filtered_items_df['NAME_TH'].iloc[0]),
+                                'Model': str(filtered_items_df['MODEL'].iloc[0]),
+                                'Brand_Name': str(filtered_items_df['BRAND_NAME'].iloc[0]),
+                                'Cabinet': str(filtered_items_df['CAB_NAME'].iloc[0]),
+                                'Shelf': str(filtered_items_df['SHE_NAME'].iloc[0]),
+                                'Block': str(filtered_items_df['BLK_NAME'].iloc[0]),
+                                'Warehouse_ID': str(filtered_items_df['WHCID'].iloc[0]),
+                                'Warehouse_Name': str(filtered_items_df['WAREHOUSE_NAME'].iloc[0]),
+                                'Batch_No': str(filtered_items_df['BATCH_NO'].iloc[0]),
+                                'Purchasing_UOM': str(filtered_items_df['PURCHASING_UOM'].iloc[0]),
+                                'Total_Balance': int(total_balance),
+                                'Quantity': int(product_quantity),
+                                'Remark': remark
+                            }
+                            st.session_state.product_data.append(product_data)
+                            save_to_database(product_data)
+
+                            if st.session_state.product_data:
+                                product_df = pd.DataFrame(st.session_state.product_data)
+                                download_data(product_df, st.session_state.username, st.session_state.login_time)
+
+                            # Clear session state product data to prevent duplicates on next save
+                            st.session_state.product_data = []
+                            # Reset the input fields
+                            st.session_state.product_quantity = 0
+                            st.session_state.remark = ""
+
+                    else:
+                        st.write("ไม่มีสินค้าที่มียอดเหลือในคลัง")
+                else:
+                    st.warning("ไม่พบข้อมูลสินค้าที่เลือก")
+
+            if st.button('📤 Logout'):
+                st.session_state.logged_in = False
+                st.session_state.username = ''
+                st.session_state.department_name = ''
+                st.session_state.login_time = ''
+                st.session_state.selected_whcid = None
+                st.session_state.selected_product_name = None
+                st.session_state.product_data = []
+                st.session_state.product_quantity = 0
+                st.session_state.remark = ""
 
     else:
         st.write("## 👾👾 Login")
@@ -141,80 +243,5 @@ def login():
             else:
                 st.error("Invalid username or password")
 
-def select_product():
-    st.subheader("เลือก WHCID")
-    with pyodbc.connect(conn_str) as conn:
-        whcid_query = '''
-        SELECT y.WHCID, y.NAME_TH
-        FROM ERP_WAREHOUSES_CODE y
-        WHERE y.EDITDATE IS NULL
-        '''
-        whcid_df = pd.read_sql(whcid_query, conn)
-        selected_whcid = st.selectbox("เลือก WHCID:", options=whcid_df['WHCID'] + ' - ' + whcid_df['NAME_TH'])
-
-        if st.button("เลือก"):
-            st.session_state.selected_whcid = selected_whcid
-            st.experimental_rerun()
-
-def select_product_name():
-    st.subheader("เลือกสินค้า")
-    product_names = load_product_names()
-    selected_product_name = st.selectbox("เลือกสินค้า:", product_names)
-    if st.button("เลือก"):
-        st.session_state.selected_product_name = selected_product_name
-        st.experimental_rerun()
-
-def load_product_names():
-    with pyodbc.connect(conn_str) as conn:
-        query = '''
-        SELECT DISTINCT ITMID + ' - ' + NAME_TH + ' - ' + MODEL AS ProductName
-        FROM ERP_ITEM_MASTER_DATA
-        WHERE EDITDATE IS NULL
-        '''
-        product_names_df = pd.read_sql(query, conn)
-        return product_names_df['ProductName'].tolist()
-
-def enter_quantity():
-    st.subheader("จำนวนสินค้า")
-    product_quantity = st.number_input(label='จำนวนสินค้า 🛒', min_value=0, value=st.session_state.product_quantity) 
-    if st.button("บันทึก"):
-        st.session_state.product_quantity = product_quantity
-        st.experimental_rerun()
-
-def enter_remark():
-    st.subheader("หมายเหตุ")
-    remark = st.text_input("ใส่หมายเหตุ (ถ้ามี)")
-    if st.button("บันทึก"):
-        st.session_state.remark = remark
-        st.experimental_rerun()
-
-def submit_count():
-    if st.button("ส่งผลการนับ"):
-        product_data = {
-            'Login_Time': st.session_state.login_time,
-            'Enter_By': st.session_state.username,
-            'Product_ID': st.session_state.selected_product_name.split(' -')[0],
-            'Product_Name': st.session_state.selected_product_name.split(' -')[1],
-            'Purchasing_UOM': '',  # Add your code to get this information
-            'Remark': st.session_state.remark,
-            'Total_Balance': 0,  # Add your code to get this information
-            'Quantity': st.session_state.product_quantity
-        }
-        save_to_database(product_data)
-        st.session_state.product_quantity = 0
-        st.session_state.remark = ""
-        st.experimental_rerun()
-
-def main():
-    login()
-    
-    if st.session_state.logged_in:
-        select_product()
-        select_product_name()
-        enter_quantity()
-        enter_remark()
-        submit_count()
-
 if __name__ == "__main__":
-    main()
-
+    app()
