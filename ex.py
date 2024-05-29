@@ -24,12 +24,13 @@ def check_credentials(username, password):
     }
     return user_db.get(username) == password
 
-def download_data(df, username, login_time, product_quantity):
+def download_data(df, username, department_name, login_time, product_quantity):
     output = io.BytesIO()
     writer = pd.ExcelWriter(output, engine='xlsxwriter')
     
     login_info = pd.DataFrame({
-        'Username': [username],  
+        'Username': [username],
+       
         'Login Time': [login_time]
     })
     login_info.to_excel(writer, index=False, sheet_name='LoginInfo')
@@ -52,18 +53,18 @@ def save_to_database(product_data_list):
             ID, LOGDATE, ENTERBY, ITMID, ITEMNAME, UNIT, REMARK, ACTUAL, INSTOCK
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         '''
-
+        
         with pyodbc.connect(conn_str) as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT ISNULL(MAX(ID), 0) FROM ERP_COUNT_STOCK")
             max_id = cursor.fetchone()[0]
             new_id = max_id + 1
-
+            
             for product_data in product_data_list:
                 data = [
-                    new_id,
-                    product_data['Login_Time'], product_data['Enter_By'], product_data['Product_ID'],
-                    product_data['Product_Name'], product_data['Purchasing_UOM'], product_data['Remark'],
+                    new_id,  
+                    product_data['Login_Time'], product_data['Enter_By'], product_data['Product_ID'], 
+                    product_data['Product_Name'], product_data['Purchasing_UOM'], product_data['Remark'], 
                     product_data['Total_Balance'], product_data['Quantity']
                 ]
                 cursor.execute(query, data)
@@ -75,6 +76,7 @@ def save_to_database(product_data_list):
 
 def app():
     if 'logged_in' not in st.session_state:
+        st.image("https://media.tenor.com/Ybj4RpDI0moAAAAi/penguin-truck.gif")
         st.session_state.logged_in = False
         st.session_state.username = ''
         st.session_state.department_name = ''
@@ -148,26 +150,22 @@ def app():
             
                 if not filtered_items_df.empty:
                     st.write("### รายละเอียดสินค้า:")
-                    # Filtered DataFrame where TOTAL_BALANCE > 0
-                    filtered_items_df_positive_balance = filtered_items_df[filtered_items_df['TOTAL_BALANCE'] > 0]
+                    # Select the required columns to display
+                    display_columns = [
+                        'BRAND_NAME', 'CAB_NAME', 'SHE_NAME', 'BLK_NAME', 
+                        'BATCH_NO', 'TOTAL_BALANCE'
+                    ]
+                    st.dataframe(filtered_items_df[display_columns])
 
-                    if not filtered_items_df_positive_balance.empty:
-                        # Select the required columns to display
-                        display_columns = [
-                            'BRAND_NAME', 'CAB_NAME', 'SHE_NAME', 'BLK_NAME',
-                            'BATCH_NO', 'TOTAL_BALANCE'
-                        ]
-                        st.dataframe(filtered_items_df_positive_balance[display_columns])
-
-                        total_balance = filtered_items_df_positive_balance['TOTAL_BALANCE'].sum()
+                    total_balance = filtered_items_df['TOTAL_BALANCE'].sum()
+                    if total_balance == 0:
+                        st.write("ไม่มีสินค้า")
+                    else:
                         st.write(f"รวมยอดสินค้าในคลัง: {total_balance}")
-
+                        
                         product_quantity = st.session_state.product_quantity
                         product_quantity = st.number_input(label='จำนวนสินค้า 🛒', min_value=0, value=product_quantity)
                         remark = st.text_area('Remark')
-       
-                        st.write(f"รวมยอดสินค้าในคลัง: {total_balance}")
-
 
                         if st.button('👉 Enter') and product_quantity > 0:
                             product_data = {
@@ -196,8 +194,7 @@ def app():
                             if st.session_state.product_data:
                                 product_df = pd.DataFrame(st.session_state.product_data)
                                 download_data(product_df, st.session_state.username, st.session_state.department_name, st.session_state.login_time, product_quantity)
-                    else:
-                        st.write("ไม่มีสินค้าที่มียอดเหลือในคลัง")
+
                 else:
                     st.warning("ไม่พบข้อมูลสินค้าที่เลือก")   
             
