@@ -80,6 +80,15 @@ def save_to_database(product_data, conn):
     except pyodbc.Error as e:
         st.error(f"Error inserting data: {e}")
 
+# Function to check user credentials
+def check_credentials(username, password):
+    user_db = {
+        'user1': 'password1',
+        'user2': 'password2',
+        'admin': 'adminpassword'
+    }
+    return user_db.get(username) == password
+    
 # Function to display the UI
 def display_ui():
     if st.session_state.logged_in:
