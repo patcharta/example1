@@ -149,7 +149,7 @@ WHERE
     p.WHCID = ?
 GROUP BY
     a.ITMID, a.NAME_TH, a.PURCHASING_UOM, a.MODEL, a.PHOTONAME,
-    b.BRAND_NAME, c.CAB_NAME, d.SHE_NAME, e    .BLK_NAME,
+    b.BRAND_NAME, c.CAB_NAME, d.SHE_NAME, e.BLK_NAME,
     p.WHCID, w.NAME_TH, p.BATCH_NO
 '''
 
@@ -175,46 +175,36 @@ GROUP BY
                         remark = st.text_area('Remark', value=st.session_state.remark)
 
                         if st.button('👉 Enter') and product_quantity > 0:
-                            # Check for duplicates in session state
-                            duplicate_entry = any(
-                                data['Product_ID'] == filtered_items_df['ITMID'].iloc[0] and
-                                data['Warehouse_ID'] == st.session_state.selected_whcid.split(' - ')[0]
-                                for data in st.session_state.product_data
-                            )
+                            product_data = {
+                                'Login_Time': st.session_state.login_time,
+                                'Enter_By': st.session_state.username,
+                                'Product_ID': str(filtered_items_df['ITMID'].iloc[0]),
+                                'Product_Name': str(filtered_items_df['NAME_TH'].iloc[0]),
+                                'Model': str(filtered_items_df['MODEL'].iloc[0]),
+                                'Brand_Name': str(filtered_items_df['BRAND_NAME'].iloc[0]),
+                                'Cabinet': str(filtered_items_df['CAB_NAME'].iloc[0]),
+                                'Shelf': str(filtered_items_df['SHE_NAME'].iloc[0]),
+                                'Block': str(filtered_items_df['BLK_NAME'].iloc[0]),
+                                'Warehouse_ID': str(filtered_items_df['WHCID'].iloc[0]),
+                                'Warehouse_Name': str(filtered_items_df['WAREHOUSE_NAME'].iloc[0]),
+                                'Batch_No': str(filtered_items_df['BATCH_NO'].iloc[0]),
+                                'Purchasing_UOM': str(filtered_items_df['PURCHASING_UOM'].iloc[0]),
+                                'Total_Balance': int(total_balance),
+                                'Quantity': int(product_quantity),
+                                'Remark': remark
+                            }
+                            st.session_state.product_data.append(product_data)
+                            save_to_database(st.session_state.product_data)
 
-                            if not duplicate_entry:
-                                product_data = {
-                                    'Login_Time': st.session_state.login_time,
-                                    'Enter_By': st.session_state.username,
-                                    'Product_ID': str(filtered_items_df['ITMID'].iloc[0]),
-                                    'Product_Name': str(filtered_items_df['NAME_TH'].iloc[0]),
-                                    'Model': str(filtered_items_df['MODEL'].iloc[0]),
-                                    'Brand_Name': str(filtered_items_df['BRAND_NAME'].iloc[0]),
-                                    'Cabinet': str(filtered_items_df['CAB_NAME'].iloc[0]),
-                                    'Shelf': str(filtered_items_df['SHE_NAME'].iloc[0]),
-                                    'Block': str(filtered_items_df['BLK_NAME'].iloc[0]),
-                                    'Warehouse_ID': str(filtered_items_df['WHCID'].iloc[0]),
-                                    'Warehouse_Name': str(filtered_items_df['WAREHOUSE_NAME'].iloc[0]),
-                                    'Batch_No': str(filtered_items_df['BATCH_NO'].iloc[0]),
-                                    'Purchasing_UOM': str(filtered_items_df['PURCHASING_UOM'].iloc[0]),
-                                    'Total_Balance': int(total_balance),
-                                    'Quantity': int(product_quantity),
-                                    'Remark': remark
-                                }
-                                st.session_state.product_data.append(product_data)
-                                save_to_database(st.session_state.product_data)
+                            if st.session_state.product_data:
+                                product_df = pd.DataFrame(st.session_state.product_data)
+                                download_data(product_df, st.session_state.username, st.session_state.login_time)
 
-                                if st.session_state.product_data:
-                                    product_df = pd.DataFrame(st.session_state.product_data)
-                                    download_data(product_df, st.session_state.username, st.session_state.login_time)
-
-                                # Clear session state product data to prevent duplicates on next save
-                                st.session_state.product_data = []
-                                # Reset the input fields
-                                st.session_state.product_quantity = 0
-                                st.session_state.remark = ""
-                            else:
-                                st.warning("รายการนี้ได้ถูกบันทึกแล้ว")
+                            # Clear session state product data to prevent duplicates on next save
+                            st.session_state.product_data = []
+                            # Reset the input fields
+                            st.session_state.product_quantity = 0
+                            st.session_state.remark = ""
 
                     else:
                         st.write("ไม่มีสินค้าที่มียอดเหลือในคลัง")
@@ -253,4 +243,3 @@ GROUP BY
 
 if __name__ == "__main__":
     app()
-
