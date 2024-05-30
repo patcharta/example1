@@ -1,10 +1,7 @@
-import os
 import pyodbc
 import pandas as pd
 import streamlit as st
 from datetime import datetime
-import base64
-import io
 import time
 import pytz
 
@@ -56,8 +53,8 @@ def save_to_database(product_data, conn_str):
     try:
         query = '''
         INSERT INTO ERP_COUNT_STOCK (
-            ID, LOGDATE, ENTERBY, ITMID, ITEMNAME, UNIT, REMARK, ACTUAL, INSTOCK
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ID, LOGDATE, ENTERBY, ITMID, ITEMNAME, UNIT, REMARK, ACTUAL, INSTOCK, WHCID
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         '''
         with pyodbc.connect(conn_str) as conn:
             cursor = conn.cursor()
@@ -68,7 +65,7 @@ def save_to_database(product_data, conn_str):
                 new_id, product_data['Login_Time'], product_data['Enter_By'], 
                 product_data['Product_ID'], product_data['Product_Name'], 
                 product_data['Purchasing_UOM'], product_data['Remark'], 
-                product_data['Total_Balance'], product_data['Quantity']
+                product_data['Quantity'], product_data['Total_Balance'], product_data['whcid']
             ]
             cursor.execute(query, data)
             conn.commit()
@@ -162,13 +159,17 @@ def count_product(selected_product_name, selected_item, conn_str):
                     'Purchasing_UOM': str(filtered_items_df['PURCHASING_UOM'].iloc[0]),
                     'Total_Balance': int(total_balance),
                     'Quantity': int(product_quantity),
-                    'Remark': remark
+                    'Remark': remark,
+                    'whcid': filtered_items_df['WHCID'].iloc[0]
                 }
                 st.session_state.product_data.append(product_data)
                 save_to_database(product_data, conn_str)
                 st.session_state.product_data = []
                 st.session_state.product_quantity = 0
                 st.session_state.remark = ""
+                time.sleep(2)
+                del st.session_state['selected_product']
+                st.experimental_rerun()
         else:
             st.write("ไม่มีสินค้าที่มียอดเหลือในคลัง")
     else:
@@ -245,3 +246,5 @@ def app():
 
 if __name__ == "__main__":
     app()
+
+
