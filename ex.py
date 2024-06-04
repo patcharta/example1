@@ -19,7 +19,8 @@ def check_credentials(username, password):
         'io': '1234',
         'dream': '5678',
         'tan': '9876',
-        'admin': 'adminpassword'
+        'admin': 'adminpassword',
+        'vasz': '1234'
     }
     return user_db.get(username.lower()) == password
 
