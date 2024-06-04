@@ -34,7 +34,7 @@ def get_connection_string(company):
         port = '1544'
         db_username = 'sa'
         db_password = 'kg@dm1nUsr!'
-        database = 'KGETEST'
+        database = 'KGE'
     elif company == 'The Chill Resort & Spa Co., Ltd.':
         server = '61.91.59.134'
         port = '1544'
