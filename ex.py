@@ -24,20 +24,19 @@ def check_credentials(username, password, conn_str):
         else:
             return False
 
+
 @st.cache_data
 def get_server_details(company):
     if company == 'K.G. Corporation Co.,Ltd.':
         return {
-            'server': '61.91.59.134',
-            'port': '1544', 
+            'server': '192.168.1.19',
             'db_username': 'sa',
             'db_password': 'kg@dm1nUsr!',
             'database': 'KGETEST'
         }
     elif company == 'The Chill Resort & Spa Co., Ltd.':
         return {
-            'server': '61.91.59.134',
-            'port': '1544',
+            'server': '192.168.1.19',
             'db_username': 'sa',
             'db_password': 'kg@dm1nUsr!',
             'database': 'THECHILL'
@@ -48,12 +47,7 @@ def get_server_details(company):
 def get_connection_string(company):
     details = get_server_details(company)
     if details:
-        server = details['server']
-        port = details['port']
-        database = details['database']
-        db_username = details['db_username']
-        db_password = details['db_password']
-        return f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server},{port};DATABASE={database};UID={db_username};PWD={db_password}'
+        return f"DRIVER={{SQL Server}};SERVER={details['server']};DATABASE={details['database']};UID={details['db_username']};PWD={details['db_password']}"
     return None
 
 def save_to_database(product_data, conn_str):
@@ -105,7 +99,6 @@ def load_data(selected_product_name, selected_whcid, conn_str):
         a.ITMID, a.NAME_TH, a.PURCHASING_UOM, a.MODEL, 
         b.BRAND_NAME, c.CAB_NAME, d.SHE_NAME, e.BLK_NAME,
         p.WHCID, w.NAME_TH, p.BATCH_NO
-    ORDER BY p.LOGDATE DESC, p.ITMID DESC
     '''
     with pyodbc.connect(conn_str) as conn:
         filtered_items_df = pd.read_sql(query_detail, conn, params=(selected_product_name, selected_whcid.split(' -')[0]))
@@ -141,7 +134,6 @@ def select_product(company):
 def count_product(selected_product_name, selected_item, conn_str):
     filtered_items_df = load_data(selected_product_name, st.session_state.selected_whcid, conn_str)
     if not filtered_items_df.empty:
-        filtered_items_df = filtered_items_df.sort_values(by=['LOGDATE', 'ITMID'], ascending=[False, False])
         st.write("### รายละเอียดสินค้า:")
         filtered_items_df_positive_balance = filtered_items_df[filtered_items_df['TOTAL_BALANCE'] > 0]
         if not filtered_items_df_positive_balance.empty:
