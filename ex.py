@@ -9,13 +9,20 @@ import pytz
 st.set_page_config(layout="wide")
 
 # Function to check user credentials
-def check_credentials(username, password):
-    user_db = {
-        'user1': 'password1',
-        'user2': 'password2',
-        'admin': 'adminpassword'
-    }
-    return user_db.get(username) == password
+@st.cache_data
+def check_credentials(username, password, conn_str):
+    with pyodbc.connect(conn_str) as conn:
+        query = '''
+        SELECT f.USERNAME, f.PASSWORD
+        FROM ERP_USERNAME f
+        '''
+        df = pd.read_sql(query, conn)
+
+        user_record = df[df['USERNAME'] == username]
+        if not user_record.empty and user_record.iloc[0]['PASSWORD'] == password:
+            return True
+        else:
+            return False
 
 @st.cache_data
 def get_server_details(company):
@@ -63,7 +70,7 @@ def save_to_database(product_data, conn_str):
             max_id = cursor.fetchone()[0]
             new_id = max_id + 1
             data = [
-                new_id, product_data['Login_Time'], product_data['Enter_By'], 
+                new_id, product_data['Time'], product_data['Enter_By'], 
                 product_data['Product_ID'], product_data['Product_Name'], 
                 product_data['Purchasing_UOM'], remark, 
                 product_data['Quantity'], product_data['Total_Balance'], product_data['whcid']
@@ -98,6 +105,7 @@ def load_data(selected_product_name, selected_whcid, conn_str):
         a.ITMID, a.NAME_TH, a.PURCHASING_UOM, a.MODEL, 
         b.BRAND_NAME, c.CAB_NAME, d.SHE_NAME, e.BLK_NAME,
         p.WHCID, w.NAME_TH, p.BATCH_NO
+    ORDER BY p.LOGDATE DESC, p.ITMID DESC
     '''
     with pyodbc.connect(conn_str) as conn:
         filtered_items_df = pd.read_sql(query_detail, conn, params=(selected_product_name, selected_whcid.split(' -')[0]))
@@ -133,6 +141,7 @@ def select_product(company):
 def count_product(selected_product_name, selected_item, conn_str):
     filtered_items_df = load_data(selected_product_name, st.session_state.selected_whcid, conn_str)
     if not filtered_items_df.empty:
+        filtered_items_df = filtered_items_df.sort_values(by=['LOGDATE', 'ITMID'], ascending=[False, False])
         st.write("### รายละเอียดสินค้า:")
         filtered_items_df_positive_balance = filtered_items_df[filtered_items_df['TOTAL_BALANCE'] > 0]
         if not filtered_items_df_positive_balance.empty:
@@ -144,8 +153,10 @@ def count_product(selected_product_name, selected_item, conn_str):
             product_quantity = st.number_input(label='จำนวนสินค้า 🛒', min_value=0, value=st.session_state.product_quantity)
             remark = st.text_area('Remark', value=st.session_state.remark)
             if st.button('👉 Enter') and product_quantity > 0:
+                timezone = pytz.timezone('Asia/Bangkok')
+                current_time = datetime.now(timezone).strftime("%Y-%m-%d %H:%M:%S")
                 product_data = {
-                    'Login_Time': st.session_state.login_time,
+                    'Time': current_time,
                     'Enter_By': st.session_state.username,
                     'Product_ID': str(filtered_items_df['ITMID'].iloc[0]),
                     'Product_Name': str(filtered_items_df['NAME_TH'].iloc[0]),
@@ -183,18 +194,19 @@ def login_section():
     company_options = ['K.G. Corporation Co.,Ltd.', 'The Chill Resort & Spa Co., Ltd.']
     company = st.selectbox("Company", options=company_options)
     if st.button("Login"):
-        if check_credentials(username, password):
+        # Set the selected company to the session state
+        st.session_state.company = company
+        # Get the connection string based on the selected company
+        conn_str = get_connection_string(company)
+        if check_credentials(username, password, conn_str):
             st.session_state.logged_in = True
             st.session_state.username = username
-            timezone = pytz.timezone('Asia/Bangkok')
-            current_time = datetime.now(timezone).strftime("%Y-%m-%d %H:%M:%S")
-            st.session_state.login_time = current_time
-            st.session_state.company = company
             st.success(f"🎉🎉 Welcome {username}")
             time.sleep(1)
             st.experimental_rerun()
         else:
             st.error("Invalid username or password")
+
 
 def main_section():
     st.write(f"👨🏻‍💼👩🏻‍💼 รายการสินค้าที่ {st.session_state.username} นับ")
@@ -222,7 +234,6 @@ def main_section():
         if st.button('📤 Logout'):
             st.session_state.logged_in = False
             st.session_state.username = ''
-            st.session_state.login_time = ''
             st.session_state.selected_whcid = None
             st.session_state.selected_product_name = None
             st.session_state.product_data = []
@@ -233,7 +244,6 @@ def app():
     if 'logged_in' not in st.session_state:
         st.session_state.logged_in = False
         st.session_state.username = ''
-        st.session_state.login_time = ''
         st.session_state.selected_whcid = None
         st.session_state.selected_product_name = None
         st.session_state.product_data = []
@@ -243,7 +253,7 @@ def app():
     if st.session_state.logged_in:
         main_section()
     else:
-        login_section()
+        login_section()  
 
 if __name__ == "__main__":
     app()
