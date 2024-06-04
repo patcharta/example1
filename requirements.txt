@@ -1,6 +1,8 @@
 streamlit
 pandas
 numpy
-pyodbc 
-pycryptodome 
+pyodbc
+pycryptodome
 configparser
+beautifulsoup4
+requests
