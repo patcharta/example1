@@ -24,29 +24,22 @@ def check_credentials(username, password):
     return user_db.get(username.lower()) == password
 
 @st.cache_data
-def get_server_details(company):
-    if (company == 'K.G. Corporation Co.,Ltd.'):
-        return {
-            'server': '61.91.59.134',
-            'db_username': 'sa',
-            'db_password': 'kg@dm1nUsr!',
-            'database': 'KGETEST'
-        }
-    elif (company == 'The Chill Resort & Spa Co., Ltd.'):
-        return {
-            'server': '61.91.59.134',
-            'db_username': 'sa',
-            'db_password': 'kg@dm1nUsr!',
-            'database': 'THECHILL'
-        }
-    return None
-
-@st.cache_data
 def get_connection_string(company):
-    details = get_server_details(company)
-    if details:
-        return f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server},{port};DATABASE={database};UID={db_username};PWD={db_password}'"
-    return None
+    if company == 'K.G. Corporation Co.,Ltd.':
+        server = '61.91.59.134'
+        port = '1544'
+        db_username = 'sa'
+        db_password = 'kg@dm1nUsr!'
+        database = 'KGETEST'
+    elif company == 'The Chill Resort & Spa Co., Ltd.':
+        server = '61.91.59.134'
+        port = '1544'
+        db_username = 'sa'
+        db_password = 'kg@dm1nUsr!'
+        database = 'THECHILL'
+
+    conn_str = f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server},{port};DATABASE={database};UID={db_username};PWD={db_password}'
+    return conn_str
     
 def save_to_database(product_data, conn_str):
     try:
