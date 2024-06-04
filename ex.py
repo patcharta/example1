@@ -4,6 +4,9 @@ import streamlit as st
 from datetime import datetime
 import time
 import pytz
+import requests
+from bs4 import BeautifulSoup
+import re
 
 # Set page configuration
 st.set_page_config(layout="wide")
