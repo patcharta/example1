@@ -217,6 +217,7 @@ def main_section():
             selected_whcid = st.selectbox("เลือก WHCID:", options=whcid_df['WHCID'] + ' - ' + whcid_df['NAME_TH'])
             if st.button("👉 Enter WHCID"):
                 st.session_state.selected_whcid = selected_whcid
+                selected_product_name, selected_item = select_product(st.session_state.company)
     else:
         st.write(f"คุณเลือก WHCID: {st.session_state.selected_whcid}")
         st.markdown("---")
