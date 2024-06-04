@@ -154,7 +154,7 @@ def count_product(selected_product_name, selected_item, conn_str):
         current_time = datetime.now(timezone).strftime("%Y-%m-%d %H:%M:%S")
         product_data = {
             'Time': current_time,
-            'Enter_By': st.session_state.username,
+            'Enter_By': st.session_state.username.upper(),
             'Product_ID': str(filtered_items_df['ITMID'].iloc[0] if not filtered_items_df.empty else selected_item['ITMID'].iloc[0]),
             'Product_Name': str(filtered_items_df['NAME_TH'].iloc[0] if not filtered_items_df.empty else selected_item['NAME_TH'].iloc[0]),
             'Model': str(filtered_items_df['MODEL'].iloc[0] if not filtered_items_df.empty else selected_item['MODEL'].iloc[0]),
