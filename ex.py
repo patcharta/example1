@@ -51,7 +51,6 @@ def get_connection_string(company):
 
 def save_to_database(product_data, conn_str):
     try:
-        remark = product_data.get('Remark', '')
         query = '''
         INSERT INTO ERP_COUNT_STOCK (
             ID, LOGDATE, ENTERBY, ITMID, ITEMNAME, UNIT, REMARK, ACTUAL, INSTOCK, WHCID
@@ -65,7 +64,7 @@ def save_to_database(product_data, conn_str):
             data = [
                 new_id, product_data['Login_Time'], product_data['Enter_By'], 
                 product_data['Product_ID'], product_data['Product_Name'], 
-                product_data['Purchasing_UOM'], remark, 
+                product_data['Purchasing_UOM'], product_data['Remark'], 
                 product_data['Quantity'], product_data['Total_Balance'], product_data['whcid']
             ]
             cursor.execute(query, data)
@@ -95,7 +94,7 @@ def load_data(selected_product_name, selected_whcid, conn_str):
         a.ITMID + ' - ' + a.NAME_TH + ' - ' + a.MODEL = ? AND
         p.WHCID = ?
     GROUP BY
-        a.ITMID, a.NAME_TH, a.PURCHASING_UOM, a.MODEL, 
+        a.ITMID, a.NAME_TH, a.PURCHASING_UOM, a.MODEL, a.PHOTONAME,
         b.BRAND_NAME, c.CAB_NAME, d.SHE_NAME, e.BLK_NAME,
         p.WHCID, w.NAME_TH, p.BATCH_NO
     '''
