@@ -328,12 +328,17 @@ if __name__ == "__main__":
     app()
 
 # Adding custom CSS to hide Streamlit footer and main menu
-hide_streamlit_style = """
+move_streamlit_style = """
             <style>
             #MainMenu {visibility: hidden;}
             footer {visibility: hidden;}
-            .viewerBadge_container__1QSob {visibility: hidden;}
-            .viewerBadge_link__1S137 {visibility: hidden;}
+            .viewerBadge_container__1QSob {
+                position: fixed;
+                top: 0;
+                left: 0;
+                visibility: visible;
+            }
+            .viewerBadge_link__1S137 {visibility: visible;}
             </style>
             """
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+st.markdown(move_streamlit_style, unsafe_allow_html=True)
