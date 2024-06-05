@@ -98,7 +98,7 @@ def load_data(selected_product_name, selected_whcid, conn_str):
     SELECT
         a.ITMID, a.NAME_TH, a.PURCHASING_UOM, a.MODEL,
         b.BRAND_NAME, c.CAB_NAME, d.SHE_NAME, e.BLK_NAME,
-        p.WHCID, w.NAME_TH AS WAREHOUSE_NAME, p.BATCH_NO, SUM(p.BALANCE) AS TOTAL_BALANCE
+        p.WHCID, w.NAME_TH AS WAREHOUSE_NAME, p.BATCH_NO, SUM(p.BALANCE) AS INSTOCK
     FROM
         ERP_ITEM_MASTER_DATA a
         LEFT JOIN ERP_BRAND b ON a.BRAID = b.BRAID
