@@ -325,18 +325,6 @@ def main_section():
             st.experimental_rerun()
 
 def app():
-   
-    st.markdown("""
-        <style>
-        /* Sarabun */
-        body {
-            font-family: 'Sarabun', sans-serif; /* ใช้ฟอนต์ Sarabun */
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
-
-
     if 'logged_in' not in st.session_state:
         st.session_state.logged_in = False
         st.session_state.username = ''
