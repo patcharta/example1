@@ -341,14 +341,3 @@ def app():
 
 if __name__ == "__main__":
     app()
-
-st.markdown("""
-<style>
-.footer-credits {
-    position: fixed;
-    bottom: 10px;
-    left: 10px;
-    color: #888;
-}
-</style>
-""", unsafe_allow_html=True)
