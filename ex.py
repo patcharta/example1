@@ -183,27 +183,34 @@ def count_product(selected_product_name, selected_item, conn_str):
         st.write("รายละเอียดสินค้า:")
         # Combine the columns 'CAB_NAME', 'SHE_NAME', and 'BLK_NAME' into a single column
         filtered_items_df['Location'] = filtered_items_df[['CAB_NAME', 'SHE_NAME', 'BLK_NAME']].apply(lambda x: ' / '.join(x.astype(str)), axis=1)
-        filtered_items_df_positive_balance = filtered_items_df[filtered_items_df['INSTOCK'] > 0]
-
+        filtered_items_df_positive_balance = filtered_items_df[filtered_items_df['TOTAL_BALANCE'] > 0]
+        
         if not filtered_items_df_positive_balance.empty:
-            display_columns = ['Location', 'BATCH_NO', 'INSTOCK']
-            st.dataframe(filtered_items_df_positive_balance[display_columns])
-            total_balance = filtered_items_df_positive_balance['INSTOCK'].sum()
+            display_columns = ['Location', 'BATCH_NO', 'TOTAL_BALANCE']
+            filtered_items_df_positive_balance = filtered_items_df_positive_balance[display_columns]
+            
+            # Create a new index starting from 1
+            filtered_items_df_positive_balance.index = range(1, len(filtered_items_df_positive_balance) + 1)
+            
+            # Display the DataFrame without the default index
+            st.dataframe(filtered_items_df_positive_balance)
+            
+            total_balance = filtered_items_df_positive_balance['TOTAL_BALANCE'].sum()
             st.write(f"รวมยอดสินค้าในคลัง: {total_balance}")
         else:
             st.write("ไม่มีสินค้าที่มียอดเหลือในคลัง")
 
+        # Fetch and display the product image
         if not filtered_items_df.empty:
             product_name = f"{filtered_items_df['NAME_TH'].iloc[0]} {filtered_items_df['MODEL'].iloc[0]} {filtered_items_df['BRAND_NAME'].iloc[0]}"
         else:
             product_name = f"{selected_item['NAME_TH'].iloc[0]} {selected_item['MODEL'].iloc[0]} {selected_item['BRAND_NAME'].iloc[0]}"
         
         image_url = get_image_url(product_name)
-        if image_url:
+        if (image_url):
             st.image(image_url)
         else:
             st.write("ไม่พบรูปภาพของสินค้า")
-
     else:
         st.warning("ไม่พบข้อมูลสินค้าที่เลือก")
 
