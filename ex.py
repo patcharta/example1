@@ -214,7 +214,7 @@ def count_product(selected_product_name, selected_item, conn_str):
         
         image_url = get_image_url(product_name)
         if image_url:
-            st.image(image_url, width=300)
+            st.image(image_url, width=300, quality=90)
         else:
             st.write("ไม่พบรูปภาพของสินค้า")
 
