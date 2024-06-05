@@ -184,75 +184,71 @@ def count_product(selected_product_name, selected_item, conn_str):
         st.write("รายละเอียดสินค้า:")
         # Combine the columns 'CAB_NAME', 'SHE_NAME', and 'BLK_NAME' into a single column
         filtered_items_df['Location'] = filtered_items_df[['CAB_NAME', 'SHE_NAME', 'BLK_NAME']].apply(lambda x: ' / '.join(x.astype(str)), axis=1)
-        filtered_items_df_positive_balance = filtered_items_df[filtered_items_df['INSTOCK'] > 0]
-        
+        filtered_items_df_positive_balance = filtered_items_df[filtered_items_df['TOTAL_BALANCE'] > 0]
+
         if not filtered_items_df_positive_balance.empty:
-            display_columns = ['Location', 'BATCH_NO', 'INSTOCK']
-            filtered_items_df_positive_balance = filtered_items_df_positive_balance[display_columns]
-            
-            # Create a new index starting from 1
-            filtered_items_df_positive_balance.index = range(1, len(filtered_items_df_positive_balance) + 1)
-            
-            # Display the DataFrame without the default index
-            st.dataframe(filtered_items_df_positive_balance)
-            
-            total_balance = filtered_items_df_positive_balance['INSTOCK'].sum()
+            display_columns = ['Location', 'BATCH_NO', 'TOTAL_BALANCE']
+            st.dataframe(filtered_items_df_positive_balance[display_columns])
+            total_balance = filtered_items_df_positive_balance['TOTAL_BALANCE'].sum()
             st.write(f"รวมยอดสินค้าในคลัง: {total_balance}")
         else:
             st.write("ไม่มีสินค้าที่มียอดเหลือในคลัง")
 
-        # Fetch and display the product image
         if not filtered_items_df.empty:
             product_name = f"{filtered_items_df['NAME_TH'].iloc[0]} {filtered_items_df['MODEL'].iloc[0]} {filtered_items_df['BRAND_NAME'].iloc[0]}"
         else:
             product_name = f"{selected_item['NAME_TH'].iloc[0]} {selected_item['MODEL'].iloc[0]} {selected_item['BRAND_NAME'].iloc[0]}"
         
         image_url = get_image_url(product_name)
-        if (image_url):
+        if image_url:
             st.image(image_url)
         else:
             st.write("ไม่พบรูปภาพของสินค้า")
+
     else:
         st.warning("ไม่พบข้อมูลสินค้าที่เลือก")
 
     # Enable quantity and remark input even if there are no products with positive balance
     product_quantity = st.number_input(label='จำนวนสินค้า 🛒', min_value=0, value=st.session_state.product_quantity)
     status = st.selectbox("Status", ["มือหนึ่ง", "มือสอง", "ผสม", "รอเคลม", "รอคืน", "รอขาย"])
-    condition = st.selectbox("Condition", ["ใหม่", "เก่าเก็บ", "พอใช้ได้", "แย่", "เสียหาย", "ผสม"])
     remark = st.text_area('Remark', value=st.session_state.remark)
     st.markdown("---")
-    if st.button('👉 Enter') and product_quantity > 0:
-        timezone = pytz.timezone('Asia/Bangkok')
-        current_time = datetime.now(timezone).strftime("%Y-%m-%d %H:%M:%S")
-        product_data = {
-            'Time': current_time,
-            'Enter_By': st.session_state.username.upper(),
-            'Product_ID': str(filtered_items_df['ITMID'].iloc[0] if not filtered_items_df.empty else selected_item['ITMID'].iloc[0]),
-            'Product_Name': str(filtered_items_df['NAME_TH'].iloc[0] if not filtered_items_df.empty else selected_item['NAME_TH'].iloc[0]),
-            'Model': str(filtered_items_df['MODEL'].iloc[0] if not filtered_items_df.empty else selected_item['MODEL'].iloc[0]),
-            'Brand_Name': str(filtered_items_df['BRAND_NAME'].iloc[0] if not filtered_items_df.empty else selected_item['BRAND_NAME'].iloc[0]),
-            'Cabinet': str(filtered_items_df['CAB_NAME'].iloc[0] if not filtered_items_df.empty else ""),
-            'Shelf': str(filtered_items_df['SHE_NAME'].iloc[0] if not filtered_items_df.empty else ""),
-            'Block': str(filtered_items_df['BLK_NAME'].iloc[0] if not filtered_items_df.empty else ""),
-            'Warehouse_ID': str(filtered_items_df['WHCID'].iloc[0] if not filtered_items_df.empty else st.session_state.selected_whcid.split(' -')[0]),
-            'Warehouse_Name': str(filtered_items_df['WAREHOUSE_NAME'].iloc[0] if not filtered_items_df.empty else st.session_state.selected_whcid.split(' -')[1]),
-            'Batch_No': str(filtered_items_df['BATCH_NO'].iloc[0] if not filtered_items_df.empty else ""),
-            'Purchasing_UOM': str(filtered_items_df['PURCHASING_UOM'].iloc[0] if not filtered_items_df.empty else selected_item['PURCHASING_UOM'].iloc[0]),
-            'Total_Balance': int(total_balance) if not filtered_items_df.empty else 0,
-            'Quantity': int(product_quantity),
-            'Remark': remark,
-            'whcid': filtered_items_df['WHCID'].iloc[0] if not filtered_items_df.empty else st.session_state.selected_whcid.split(' -')[0],
-            'Status': status,
-            'Condition': condition
-        }
-        st.session_state.product_data.append(product_data)
-        save_to_database(product_data, conn_str)
-        st.session_state.product_data = []
-        st.session_state.product_quantity = 0
-        st.session_state.remark = ""
-        time.sleep(2)
-        del st.session_state['selected_product']
-        st.experimental_rerun()
+
+    if st.button('👉 Enter'):
+        if status == "ผสม" and not remark.strip():
+            st.error("กรุณาใส่ Remark เมื่อเลือกสถานะ 'ผสม'")
+        elif product_quantity > 0:
+            timezone = pytz.timezone('Asia/Bangkok')
+            current_time = datetime.now(timezone).strftime("%Y-%m-%d %H:%M:%S")
+            product_data = {
+                'Time': current_time,
+                'Enter_By': st.session_state.username.upper(),
+                'Product_ID': str(filtered_items_df['ITMID'].iloc[0] if not filtered_items_df.empty else selected_item['ITMID'].iloc[0]),
+                'Product_Name': str(filtered_items_df['NAME_TH'].iloc[0] if not filtered_items_df.empty else selected_item['NAME_TH'].iloc[0]),
+                'Model': str(filtered_items_df['MODEL'].iloc[0] if not filtered_items_df.empty else selected_item['MODEL'].iloc[0]),
+                'Brand_Name': str(filtered_items_df['BRAND_NAME'].iloc[0] if not filtered_items_df.empty else selected_item['BRAND_NAME'].iloc[0]),
+                'Cabinet': str(filtered_items_df['CAB_NAME'].iloc[0] if not filtered_items_df.empty else ""),
+                'Shelf': str(filtered_items_df['SHE_NAME'].iloc[0] if not filtered_items_df.empty else ""),
+                'Block': str(filtered_items_df['BLK_NAME'].iloc[0] if not filtered_items_df.empty else ""),
+                'Warehouse_ID': str(filtered_items_df['WHCID'].iloc[0] if not filtered_items_df.empty else st.session_state.selected_whcid.split(' -')[0]),
+                'Warehouse_Name': str(filtered_items_df['WAREHOUSE_NAME'].iloc[0] if not filtered_items_df.empty else st.session_state.selected_whcid.split(' -')[1]),
+                'Batch_No': str(filtered_items_df['BATCH_NO'].iloc[0] if not filtered_items_df.empty else ""),
+                'Purchasing_UOM': str(filtered_items_df['PURCHASING_UOM'].iloc[0] if not filtered_items_df.empty else selected_item['PURCHASING_UOM'].iloc[0]),
+                'Total_Balance': int(total_balance) if not filtered_items_df.empty else 0,
+                'Quantity': int(product_quantity),
+                'Remark': remark,
+                'whcid': filtered_items_df['WHCID'].iloc[0] if not filtered_items_df.empty else st.session_state.selected_whcid.split(' -')[0],
+                'Status': status,
+                'Condition': condition
+            }
+            st.session_state.product_data.append(product_data)
+            save_to_database(product_data, conn_str)
+            st.session_state.product_data = []
+            st.session_state.product_quantity = 0
+            st.session_state.remark = ""
+            time.sleep(2)
+            del st.session_state['selected_product']
+            st.experimental_rerun()
 
 def login_section():
     st.write("## 👾👾 Login")
