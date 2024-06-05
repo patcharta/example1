@@ -148,8 +148,8 @@ def fetch_products(company):
 def select_product(company):
     st.write("ค้นหาสินค้า 🔎")
     items_df = fetch_products(company)
-    items_options = [None] + list(items_df['ITMID'] + ' - ' + items_df['NAME_TH'] + ' - ' + items_df['MODEL'])
-
+    items_options = list(items_df['ITMID'] + ' - ' + items_df['NAME_TH'] + ' - ' + items_df['MODEL'])
+    
     # Adding CSS for word wrap
     st.markdown("""
         <style>
@@ -160,7 +160,7 @@ def select_product(company):
         </style>
         """, unsafe_allow_html=True)
     
-    selected_product_name = st.selectbox("เลือกสินค้า", options=items_options, key='selected_product')
+    selected_product_name = st.selectbox("เลือกสินค้า", options=items_options, index=None, key='selected_product')
 
     if selected_product_name:
         selected_item = items_df[items_df['ITMID'] + ' - ' + items_df['NAME_TH'] + ' - ' + items_df['MODEL'] == selected_product_name]
@@ -221,14 +221,16 @@ def count_product(selected_product_name, selected_item, conn_str):
 
     # Enable quantity and remark input even if there are no products with positive balance
     product_quantity = st.number_input(label='จำนวนสินค้า 🛒', min_value=0, value=st.session_state.product_quantity)
-    status = st.selectbox("สถานะ", ["มือหนึ่ง", "มือสอง", "ผสม", "รอเคลม", "รอคืน", "รอขาย"])
-    condition = st.selectbox("สภาพสินค้า", ["ใหม่", "เก่าเก็บ", "พอใช้ได้", "แย่", "เสียหาย", "ผสม"])
+    status = st.selectbox("สถานะ", ["มือหนึ่ง", "มือสอง", "ผสม", "รอเคลม", "รอคืน", "รอขาย"], index=None)
+    condition = st.selectbox("สภาพสินค้า", ["ใหม่", "เก่าเก็บ", "พอใช้ได้", "แย่", "เสียหาย", "ผสม"], index=None)
     remark = st.text_area('หมายเหตุ', value=st.session_state.remark)
     st.markdown("---")
 
     if st.button('👉 Enter'):
-        if status == "ผสม" and not remark.strip():
-            st.error("กรุณาใส่ Remark เมื่อเลือกสถานะ 'ผสม'")
+        if status is None or condition is None:
+            st.error("กรุณาเลือก 'สถานะ' และ 'สภาพสินค้า' ก่อนบันทึกข้อมูล")
+        elif status == "ผสม" and not remark.strip():
+            st.error("กรุณาใส่ 'หมายเหตุ' เมื่อเลือกสถานะ 'ผสม'")
         elif product_quantity > 0:
             timezone = pytz.timezone('Asia/Bangkok')
             current_time = datetime.now(timezone).strftime("%Y-%m-%d %H:%M:%S")
