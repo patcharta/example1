@@ -309,6 +309,20 @@ def main_section():
             st.session_state.remark = ""
             st.experimental_rerun()
 
+# Adding custom CSS to move "Hosted with Streamlit" to the top left corner 
+move_streamlit_style = """
+<style>
+.viewerBadge_container__1QSob {
+    position: fixed;
+    top: 0;
+    left: 0;
+    visibility: visible;
+}
+.viewerBadge_link__1S137 {visibility: visible;}
+</style>
+"""
+st.markdown(move_streamlit_style, unsafe_allow_html=True)
+
 def app():
     if 'logged_in' not in st.session_state:
         st.session_state.logged_in = False
@@ -326,17 +340,3 @@ def app():
 
 if __name__ == "__main__":
     app()
-
-# Adding custom CSS to move "Hosted with Streamlit" to the top left corner
-move_streamlit_style = """
-            <style>
-            .viewerBadge_container__1QSob {
-                position: fixed;
-                top: 0;
-                left: 0;
-                visibility: visible;
-            }
-            .viewerBadge_link__1S137 {visibility: visible;}
-            </style>
-            """
-st.markdown(move_streamlit_style, unsafe_allow_html=True)
