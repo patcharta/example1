@@ -70,8 +70,8 @@ def save_to_database(product_data, conn_str):
         remark = product_data.get('Remark', '')
         query = '''
         INSERT INTO ERP_COUNT_STOCK (
-            ID, LOGDATE, ENTERBY, ITMID, ITEMNAME, UNIT, REMARK, ACTUAL, INSTOCK, WHCID
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ID, LOGDATE, ENTERBY, ITMID, ITEMNAME, UNIT, REMARK, ACTUAL, INSTOCK, WHCID, STATUS, CONDITION
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         '''
         with pyodbc.connect(conn_str) as conn:
             cursor = conn.cursor()
@@ -82,7 +82,8 @@ def save_to_database(product_data, conn_str):
                 new_id, product_data['Time'], product_data['Enter_By'],
                 product_data['Product_ID'], product_data['Product_Name'],
                 product_data['Purchasing_UOM'], remark,
-                product_data['Quantity'], product_data['Total_Balance'], product_data['whcid']
+                product_data['Quantity'], product_data['Total_Balance'], product_data['whcid'],
+                product_data['Status'], product_data['Condition'] # Adding status and condition
             ]
             cursor.execute(query, data)
             conn.commit()
@@ -216,6 +217,8 @@ def count_product(selected_product_name, selected_item, conn_str):
 
     # Enable quantity and remark input even if there are no products with positive balance
     product_quantity = st.number_input(label='จำนวนสินค้า 🛒', min_value=0, value=st.session_state.product_quantity)
+    status = st.selectbox("Status", ["มือหนึ่ง", "มือสอง", "ผสม", "รอเคลม", "รอคืน", "รอขาย"])
+    condition = st.selectbox("Condition", ["ใหม่", "เก่าเก็บ", "พอใช้ได้", "แย่", "เสียหาย", "ผสม"])
     remark = st.text_area('Remark', value=st.session_state.remark)
     st.markdown("---")
     if st.button('👉 Enter') and product_quantity > 0:
@@ -238,7 +241,9 @@ def count_product(selected_product_name, selected_item, conn_str):
             'Total_Balance': int(total_balance) if not filtered_items_df.empty else 0,
             'Quantity': int(product_quantity),
             'Remark': remark,
-            'whcid': filtered_items_df['WHCID'].iloc[0] if not filtered_items_df.empty else st.session_state.selected_whcid.split(' -')[0]
+            'whcid': filtered_items_df['WHCID'].iloc[0] if not filtered_items_df.empty else st.session_state.selected_whcid.split(' -')[0],
+            'Status': status,
+            'Condition': condition
         }
         st.session_state.product_data.append(product_data)
         save_to_database(product_data, conn_str)
