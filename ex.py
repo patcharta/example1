@@ -149,6 +149,17 @@ def select_product(company):
     st.write("ค้นหาสินค้า")
     items_df = fetch_products(company)
     items_options = [None] + list(items_df['ITMID'] + ' - ' + items_df['NAME_TH'] + ' - ' + items_df['MODEL'])
+
+    # Adding CSS for word wrap
+    st.markdown("""
+        <style>
+        .wrap-text .css-1wa3eu0 {
+            white-space: normal !important;
+            overflow-wrap: anywhere;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+    
     selected_product_name = st.selectbox("เลือกสินค้า:", options=items_options, key='selected_product')
 
     if selected_product_name:
