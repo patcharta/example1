@@ -210,8 +210,9 @@ def count_product(selected_product_name, selected_item, conn_str):
 
     # Enable quantity and remark input even if there are no products with positive balance
     product_quantity = st.number_input(label='จำนวนสินค้า 🛒', min_value=0, value=st.session_state.product_quantity)
-    status = st.selectbox("Status", ["มือหนึ่ง", "มือสอง", "ผสม", "รอเคลม", "รอคืน", "รอขาย"])
-    remark = st.text_area('Remark', value=st.session_state.remark)
+    status = st.selectbox("สถานะ", ["มือหนึ่ง", "มือสอง", "ผสม", "รอเคลม", "รอคืน", "รอขาย"])
+    condition = st.selectbox("สภาพสินค้า", ["ใหม่", "เก่าเก็บ", "พอใช้ได้", "แย่", "เสียหาย", "ผสม"])
+    remark = st.text_area('หมายเหตุ', value=st.session_state.remark)
     st.markdown("---")
 
     if st.button('👉 Enter'):
