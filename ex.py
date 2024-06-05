@@ -146,7 +146,7 @@ def fetch_products(company):
         st.error(f"Unexpected error: {e}")
 
 def select_product(company):
-    st.write("ค้นหาสินค้า 🔍")
+    st.write("ค้นหาสินค้า 🕵️")
     items_df = fetch_products(company)
     items_options = [None] + list(items_df['ITMID'] + ' - ' + items_df['NAME_TH'] + ' - ' + items_df['MODEL'])
 
