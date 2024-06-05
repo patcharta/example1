@@ -59,9 +59,9 @@ def save_to_database(product_data, conn_str):
             max_id = cursor.fetchone()[0]
             new_id = max_id + 1
             data = [
-                new_id, product_data['Time'], product_data['Enter_By'], 
-                product_data['Product_ID'], product_data['Product_Name'], 
-                product_data['Purchasing_UOM'], remark, 
+                new_id, product_data['Time'], product_data['Enter_By'],
+                product_data['Product_ID'], product_data['Product_Name'],
+                product_data['Purchasing_UOM'], remark,
                 product_data['Quantity'], product_data['Total_Balance'], product_data['whcid']
             ]
             cursor.execute(query, data)
@@ -74,7 +74,7 @@ def save_to_database(product_data, conn_str):
 def load_data(selected_product_name, selected_whcid, conn_str):
     query_detail = '''
     SELECT
-        a.ITMID, a.NAME_TH, a.PURCHASING_UOM, a.MODEL, 
+        a.ITMID, a.NAME_TH, a.PURCHASING_UOM, a.MODEL,
         b.BRAND_NAME, c.CAB_NAME, d.SHE_NAME, e.BLK_NAME,
         p.WHCID, w.NAME_TH AS WAREHOUSE_NAME, p.BATCH_NO, SUM(p.BALANCE) AS TOTAL_BALANCE
     FROM
@@ -91,7 +91,7 @@ def load_data(selected_product_name, selected_whcid, conn_str):
         a.ITMID + ' - ' + a.NAME_TH + ' - ' + a.MODEL = ? AND
         p.WHCID = ?
     GROUP BY
-        a.ITMID, a.NAME_TH, a.PURCHASING_UOM, a.MODEL, 
+        a.ITMID, a.NAME_TH, a.PURCHASING_UOM, a.MODEL,
         b.BRAND_NAME, c.CAB_NAME, d.SHE_NAME, e.BLK_NAME,
         p.WHCID, w.NAME_TH, p.BATCH_NO
     '''
@@ -142,7 +142,7 @@ def get_image_url(product_name):
     except Exception as e:
         st.error(f"Error fetching image: {e}")
         return None
-    
+
 def count_product(selected_product_name, selected_item, conn_str):
     filtered_items_df = load_data(selected_product_name, st.session_state.selected_whcid, conn_str)
     total_balance = 0  # Ensure total_balance is defined
@@ -152,7 +152,7 @@ def count_product(selected_product_name, selected_item, conn_str):
         # Combine the columns 'CAB_NAME', 'SHE_NAME', and 'BLK_NAME' into a single column
         filtered_items_df['Location'] = filtered_items_df[['CAB_NAME', 'SHE_NAME', 'BLK_NAME']].apply(lambda x: ' / '.join(x.astype(str)), axis=1)
         filtered_items_df_positive_balance = filtered_items_df[filtered_items_df['TOTAL_BALANCE'] > 0]
-        
+
         if not filtered_items_df_positive_balance.empty:
             display_columns = ['Location', 'BATCH_NO', 'TOTAL_BALANCE']
             st.dataframe(filtered_items_df_positive_balance[display_columns])
@@ -161,7 +161,6 @@ def count_product(selected_product_name, selected_item, conn_str):
         else:
             st.write("ไม่มีสินค้าที่มียอดเหลือในคลัง")
 
-        # Fetch and display the product image
         if not filtered_items_df.empty:
             product_name = f"{filtered_items_df['NAME_TH'].iloc[0]} {filtered_items_df['MODEL'].iloc[0]} {filtered_items_df['BRAND_NAME'].iloc[0]}"
         else:
@@ -185,7 +184,7 @@ def count_product(selected_product_name, selected_item, conn_str):
         current_time = datetime.now(timezone).strftime("%Y-%m-%d %H:%M:%S")
         product_data = {
             'Time': current_time,
-            'Enter_By': st.session_state.username.upper(),
+            'Enter_By': st.session_state.username,
             'Product_ID': str(filtered_items_df['ITMID'].iloc[0] if not filtered_items_df.empty else selected_item['ITMID'].iloc[0]),
             'Product_Name': str(filtered_items_df['NAME_TH'].iloc[0] if not filtered_items_df.empty else selected_item['NAME_TH'].iloc[0]),
             'Model': str(filtered_items_df['MODEL'].iloc[0] if not filtered_items_df.empty else selected_item['MODEL'].iloc[0]),
@@ -249,7 +248,6 @@ def main_section():
             if st.button("👉 Enter WHCID"):
                 st.session_state.selected_whcid = selected_whcid
                 st.experimental_rerun()
-                #selected_product_name, selected_item = select_product(st.session_state.company)
     else:
         st.write(f"คุณเลือก WHCID: {st.session_state.selected_whcid}")
         st.markdown("---")
@@ -280,7 +278,7 @@ def app():
     if st.session_state.logged_in:
         main_section()
     else:
-        login_section()  
+        login_section()
 
 if __name__ == "__main__":
     app()
