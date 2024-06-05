@@ -168,15 +168,25 @@ def get_image_url(product_name):
 
 def count_product(selected_product_name, selected_item, conn_str):
     filtered_items_df = load_data(selected_product_name, st.session_state.selected_whcid, conn_str)
+    total_balance = 0  # Ensure total_balance is defined
+
     if not filtered_items_df.empty:
-        st.write("### 📦 ข้อมูลสินค้า")
-        st.dataframe(filtered_items_df)
+        st.write("รายละเอียดสินค้า:")
+        # Combine the columns 'CAB_NAME', 'SHE_NAME', and 'BLK_NAME' into a single column
+        filtered_items_df['Location'] = filtered_items_df[['CAB_NAME', 'SHE_NAME', 'BLK_NAME']].apply(lambda x: ' / '.join(x.astype(str)), axis=1)
+        filtered_items_df_positive_balance = filtered_items_df[filtered_items_df['TOTAL_BALANCE'] > 0]
+        
+        if not filtered_items_df_positive_balance.empty:
+            display_columns = ['Location', 'BATCH_NO', 'TOTAL_BALANCE']
+            st.dataframe(filtered_items_df_positive_balance[display_columns])
+            total_balance = filtered_items_df_positive_balance['TOTAL_BALANCE'].sum()
+            st.write(f"รวมยอดสินค้าในคลัง: {total_balance}")
+        else:
+            st.write("ไม่มีสินค้าที่มียอดเหลือในคลัง")
 
-        total_balance = filtered_items_df['TOTAL_BALANCE'].sum()
-        st.write(f"ยอดรวมในสต็อก: {total_balance}")
-
-        if selected_item['BRAND_NAME'].iloc[0] != '':
-            product_name = f"{selected_item['NAME_TH'].iloc[0]} {selected_item['MODEL'].iloc[0]} {selected_item['BRAND_NAME'].iloc[0]}"
+        # Fetch and display the product image
+        if not filtered_items_df.empty:
+            product_name = f"{filtered_items_df['NAME_TH'].iloc[0]} {filtered_items_df['MODEL'].iloc[0]} {filtered_items_df['BRAND_NAME'].iloc[0]}"
         else:
             product_name = f"{selected_item['NAME_TH'].iloc[0]} {selected_item['MODEL'].iloc[0]} {selected_item['BRAND_NAME'].iloc[0]}"
         
@@ -198,7 +208,7 @@ def count_product(selected_product_name, selected_item, conn_str):
         current_time = datetime.now(timezone).strftime("%Y-%m-%d %H:%M:%S")
         product_data = {
             'Time': current_time,
-            'Enter_By': st.session_state.username,
+            'Enter_By': st.session_state.username.upper(),
             'Product_ID': str(filtered_items_df['ITMID'].iloc[0] if not filtered_items_df.empty else selected_item['ITMID'].iloc[0]),
             'Product_Name': str(filtered_items_df['NAME_TH'].iloc[0] if not filtered_items_df.empty else selected_item['NAME_TH'].iloc[0]),
             'Model': str(filtered_items_df['MODEL'].iloc[0] if not filtered_items_df.empty else selected_item['MODEL'].iloc[0]),
