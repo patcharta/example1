@@ -160,7 +160,7 @@ def select_product(company):
         </style>
         """, unsafe_allow_html=True)
     
-    selected_product_name = st.selectbox("# เลือกสินค้า", options=items_options, key='selected_product')
+    selected_product_name = st.selectbox("## เลือกสินค้า", options=items_options, key='selected_product')
 
     if selected_product_name:
         selected_item = items_df[items_df['ITMID'] + ' - ' + items_df['NAME_TH'] + ' - ' + items_df['MODEL'] == selected_product_name]
