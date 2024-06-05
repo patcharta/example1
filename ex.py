@@ -184,19 +184,15 @@ def count_product(selected_product_name, selected_item, conn_str):
         # Combine the columns 'CAB_NAME', 'SHE_NAME', and 'BLK_NAME' into a single column
         filtered_items_df['Location'] = filtered_items_df[['CAB_NAME', 'SHE_NAME', 'BLK_NAME']].apply(lambda x: ' / '.join(x.astype(str)), axis=1)
         filtered_items_df_positive_balance = filtered_items_df[filtered_items_df['TOTAL_BALANCE'] > 0]
-        
+
         if not filtered_items_df_positive_balance.empty:
             display_columns = ['Location', 'BATCH_NO', 'TOTAL_BALANCE']
-            filtered_items_df_positive_balance = filtered_items_df_positive_balance[display_columns]
-            # Convert to HTML without index and display it
-            html_table = filtered_items_df_positive_balance.to_html(index=False, classes="table table-striped")
-            st.markdown(html_table, unsafe_allow_html=True)
+            st.dataframe(filtered_items_df_positive_balance[display_columns])
             total_balance = filtered_items_df_positive_balance['TOTAL_BALANCE'].sum()
             st.write(f"รวมยอดสินค้าในคลัง: {total_balance}")
         else:
             st.write("ไม่มีสินค้าที่มียอดเหลือในคลัง")
 
-        # Fetch and display the product image
         if not filtered_items_df.empty:
             product_name = f"{filtered_items_df['NAME_TH'].iloc[0]} {filtered_items_df['MODEL'].iloc[0]} {filtered_items_df['BRAND_NAME'].iloc[0]}"
         else:
