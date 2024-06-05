@@ -35,7 +35,7 @@ def get_server_details(company):
             'port': '1544', 
             'db_username': 'sa',
             'db_password': 'kg@dm1nUsr!',
-            'database': 'KGETEST'
+            'database': 'KGE'
         }
     elif company == 'The Chill Resort & Spa Co., Ltd.':
         return {
