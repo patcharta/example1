@@ -199,7 +199,9 @@ def count_product(selected_product_name, selected_item, conn_str):
 
         if not filtered_items_df_positive_balance.empty:
             display_columns = ['Location', 'BATCH_NO', 'INSTOCK']
-            st.dataframe(filtered_items_df_positive_balance[display_columns])
+            filtered_items_df_positive_balance = filtered_items_df_positive_balance[display_columns]
+            filtered_items_df_positive_balance.index = range(1, len(filtered_items_df_positive_balance) + 1)
+            st.dataframe(filtered_items_df_positive_balance)
             total_balance = filtered_items_df_positive_balance['INSTOCK'].sum()
             st.write(f"รวมยอดสินค้าในคลัง: {total_balance}")
         else:
