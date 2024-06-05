@@ -160,11 +160,20 @@ def select_product(company):
         return None, None
 
 def get_image_url(product_name):
-    search_query = f"{product_name} site:google.com"
-    search_response = requests.get(f"https://www.google.com/search?q={search_query}&tbm=isch")
-    soup = BeautifulSoup(search_response.text, 'html.parser')
-    image_tags = soup.find_all("img", {"src": re.compile("gstatic.com")})
-    return image_tags[0]["src"] if image_tags else None
+    try:
+        query = "+".join(product_name.split())
+        url = f"https://www.google.com/search?tbm=isch&q={query}"
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+        }
+        response = requests.get(url, headers=headers)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        image_element = soup.find("img", {"src": re.compile("https://.*")})
+        image_url = image_element["src"] if image_element else None
+        return image_url
+    except Exception as e:
+        st.error(f"Error fetching image: {e}")
+        return None
 
 def count_product(selected_product_name, selected_item, conn_str):
     filtered_items_df = load_data(selected_product_name, st.session_state.selected_whcid, conn_str)
