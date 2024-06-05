@@ -263,7 +263,7 @@ def count_product(selected_product_name, selected_item, conn_str):
             st.experimental_rerun()
 
 def login_section():
-    st.write("## 👾👾 Login")
+    st.write("## Login 🚚")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
     company_options = ['K.G. Corporation Co.,Ltd.', 'The Chill Resort & Spa Co., Ltd.']
