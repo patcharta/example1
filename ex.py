@@ -251,17 +251,21 @@ def main_section():
     if st.session_state.selected_whcid is None:
         st.write("เลือก WHCID")
         conn_str = get_connection_string(st.session_state.company)
-        with pyodbc.connect(conn_str) as conn:
-            whcid_query = '''
-            SELECT y.WHCID, y.NAME_TH
-            FROM ERP_WAREHOUSES_CODE y
-            WHERE y.EDITDATE IS NULL
-            '''
-            whcid_df = pd.read_sql(whcid_query, conn)
-            selected_whcid = st.selectbox("เลือก WHCID:", options=whcid_df['WHCID'] + ' - ' + whcid_df['NAME_TH'])
-            if st.button("👉 Enter WHCID"):
-                st.session_state.selected_whcid = selected_whcid
-                st.experimental_rerun()
+        st.write(f"Connection String: {conn_str}")  # Print the connection string
+        try:
+            with pyodbc.connect(conn_str) as conn:
+                whcid_query = '''
+                SELECT y.WHCID, y.NAME_TH
+                FROM ERP_WAREHOUSES_CODE y
+                WHERE y.EDITDATE IS NULL
+                '''
+                whcid_df = pd.read_sql(whcid_query, conn)
+                selected_whcid = st.selectbox("เลือก WHCID:", options=whcid_df['WHCID'] + ' - ' + whcid_df['NAME_TH'])
+                if st.button("👉 Enter WHCID"):
+                    st.session_state.selected_whcid = selected_whcid
+                    st.experimental_rerun()
+        except pyodbc.Error as e:
+            st.error(f"Error connecting to the database: {e}")
     else:
         st.write(f"คุณเลือก WHCID: {st.session_state.selected_whcid}")
         st.markdown("---")
