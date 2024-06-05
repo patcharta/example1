@@ -251,7 +251,6 @@ def main_section():
     if st.session_state.selected_whcid is None:
         st.write("เลือก WHCID")
         conn_str = get_connection_string(st.session_state.company)
-        st.write(f"Connection String: {conn_str}")  # Print the connection string
         try:
             with pyodbc.connect(conn_str) as conn:
                 whcid_query = '''
