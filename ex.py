@@ -52,10 +52,10 @@ def get_connection_string(company):
     details = get_server_details(company)
     if details:
         server = details['server']
-        port = details['port']
-        database = details['database']
+        port = '1544'  # Assuming the port is the same for all
         db_username = details['db_username']
         db_password = details['db_password']
+        database = details['database']
         return f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server},{port};DATABASE={database};UID={db_username};PWD={db_password}'
     return None
     
