@@ -49,15 +49,21 @@ def get_server_details(company):
 
 @st.cache_data
 def get_connection_string(company):
-    details = get_server_details(company)
-    if details:
-        server = details['server']
-        port = '1544'  # Assuming the port is the same for all
-        db_username = details['db_username']
-        db_password = details['db_password']
-        database = details['database']
-        return f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server},{port};DATABASE={database};UID={db_username};PWD={db_password}'
-    return None
+    if company == 'K.G. Corporation Co.,Ltd.':
+        server = '61.91.59.134'
+        port = '1544'
+        db_username = 'sa'
+        db_password = 'kg@dm1nUsr!'
+        database = 'KGE'
+    elif company == 'The Chill Resort & Spa Co., Ltd.':
+        server = '61.91.59.134'
+        port = '1544'
+        db_username = 'sa'
+        db_password = 'kg@dm1nUsr!'
+        database = 'THECHILL'
+
+    conn_str = f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server},{port};DATABASE={database};UID={db_username};PWD={db_password}'
+    return conn_str
 
 def save_to_database(product_data, conn_str):
     try:
