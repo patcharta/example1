@@ -284,7 +284,7 @@ def login_section():
 
 def main_section():
     st.write(f"👨🏻‍💼👩🏻‍💼 รายการสินค้าที่ {st.session_state.username.upper()} นับ")
-    st.write(🏗️ {st.session_state.company})
+    st.write(f"🏗️🏗️ {st.session_state.company}")
 
     if st.session_state.selected_whcid is None:
         st.write("เลือก WHCID")
