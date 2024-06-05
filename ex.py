@@ -31,15 +31,15 @@ def check_credentials(username, password):
 def get_server_details(company):
     if company == 'K.G. Corporation Co.,Ltd.':
         return {
-            'server': '61.91.59.134',
+            'server': '192.168.1.19',
             'port': '1544', 
             'db_username': 'sa',
             'db_password': 'kg@dm1nUsr!',
-            'database': 'KGE'
+            'database': 'KGETEST'
         }
     elif company == 'The Chill Resort & Spa Co., Ltd.':
         return {
-            'server': '61.91.59.134',
+            'server': '192.168.1.19',
             'port': '1544',
             'db_username': 'sa',
             'db_password': 'kg@dm1nUsr!',
@@ -58,7 +58,7 @@ def get_connection_string(company):
         database = details['database']
         return f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server},{port};DATABASE={database};UID={db_username};PWD={db_password}'
     return None
-    
+
 def save_to_database(product_data, conn_str):
     try:
         remark = product_data.get('Remark', '')
@@ -83,6 +83,8 @@ def save_to_database(product_data, conn_str):
         st.success("Data saved successfully!")
     except pyodbc.Error as e:
         st.error(f"Error inserting data: {e}")
+    except Exception as e:
+        st.error(f"Unexpected error: {e}")
 
 @st.cache_data
 def load_data(selected_product_name, selected_whcid, conn_str):
@@ -109,22 +111,32 @@ def load_data(selected_product_name, selected_whcid, conn_str):
         b.BRAND_NAME, c.CAB_NAME, d.SHE_NAME, e.BLK_NAME,
         p.WHCID, w.NAME_TH, p.BATCH_NO
     '''
-    with pyodbc.connect(conn_str) as conn:
-        filtered_items_df = pd.read_sql(query_detail, conn, params=(selected_product_name, selected_whcid.split(' -')[0]))
-    return filtered_items_df
+    try:
+        with pyodbc.connect(conn_str) as conn:
+            filtered_items_df = pd.read_sql(query_detail, conn, params=(selected_product_name, selected_whcid.split(' -')[0]))
+        return filtered_items_df
+    except pyodbc.Error as e:
+        st.error(f"Error loading data: {e}")
+    except Exception as e:
+        st.error(f"Unexpected error: {e}")
 
 @st.cache_data
 def fetch_products(company):
     conn_str = get_connection_string(company)
-    with pyodbc.connect(conn_str) as conn:
-        product_query = '''
-        SELECT x.ITMID, x.NAME_TH, x.MODEL, x.EDITDATE, q.BRAND_NAME
-        FROM ERP_ITEM_MASTER_DATA x
-        LEFT JOIN ERP_BRAND q ON x.BRAID = q.BRAID
-        WHERE x.EDITDATE IS NULL AND x.GRPID IN ('11', '71', '77', '73', '76', '75')
-        '''
-        items_df = pd.read_sql(product_query, conn)
-    return items_df.fillna('')
+    try:
+        with pyodbc.connect(conn_str) as conn:
+            product_query = '''
+            SELECT x.ITMID, x.NAME_TH, x.MODEL, x.EDITDATE, q.BRAND_NAME
+            FROM ERP_ITEM_MASTER_DATA x
+            LEFT JOIN ERP_BRAND q ON x.BRAID = q.BRAID
+            WHERE x.EDITDATE IS NULL AND x.GRPID IN ('11', '71', '77', '73', '76', '75')
+            '''
+            items_df = pd.read_sql(product_query, conn)
+        return items_df.fillna('')
+    except pyodbc.Error as e:
+        st.error(f"Error fetching products: {e}")
+    except Exception as e:
+        st.error(f"Unexpected error: {e}")
 
 def select_product(company):
     st.write("ค้นหาสินค้า")
@@ -142,41 +154,23 @@ def select_product(company):
         return None, None
 
 def get_image_url(product_name):
-    try:
-        query = "+".join(product_name.split())
-        url = f"https://www.google.com/search?tbm=isch&q={query}"
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
-        }
-        response = requests.get(url, headers=headers)
-        soup = BeautifulSoup(response.text, 'html.parser')
-        image_element = soup.find("img", {"src": re.compile("https://.*")})
-        image_url = image_element["src"] if image_element else None
-        return image_url
-    except Exception as e:
-        st.error(f"Error fetching image: {e}")
-        return None
+    search_query = f"{product_name} site:google.com"
+    search_response = requests.get(f"https://www.google.com/search?q={search_query}&tbm=isch")
+    soup = BeautifulSoup(search_response.text, 'html.parser')
+    image_tags = soup.find_all("img", {"src": re.compile("gstatic.com")})
+    return image_tags[0]["src"] if image_tags else None
 
 def count_product(selected_product_name, selected_item, conn_str):
     filtered_items_df = load_data(selected_product_name, st.session_state.selected_whcid, conn_str)
-    total_balance = 0  # Ensure total_balance is defined
-
     if not filtered_items_df.empty:
-        st.write("รายละเอียดสินค้า:")
-        # Combine the columns 'CAB_NAME', 'SHE_NAME', and 'BLK_NAME' into a single column
-        filtered_items_df['Location'] = filtered_items_df[['CAB_NAME', 'SHE_NAME', 'BLK_NAME']].apply(lambda x: ' / '.join(x.astype(str)), axis=1)
-        filtered_items_df_positive_balance = filtered_items_df[filtered_items_df['TOTAL_BALANCE'] > 0]
+        st.write("### 📦 ข้อมูลสินค้า")
+        st.dataframe(filtered_items_df)
 
-        if not filtered_items_df_positive_balance.empty:
-            display_columns = ['Location', 'BATCH_NO', 'TOTAL_BALANCE']
-            st.dataframe(filtered_items_df_positive_balance[display_columns])
-            total_balance = filtered_items_df_positive_balance['TOTAL_BALANCE'].sum()
-            st.write(f"รวมยอดสินค้าในคลัง: {total_balance}")
-        else:
-            st.write("ไม่มีสินค้าที่มียอดเหลือในคลัง")
+        total_balance = filtered_items_df['TOTAL_BALANCE'].sum()
+        st.write(f"ยอดรวมในสต็อก: {total_balance}")
 
-        if not filtered_items_df.empty:
-            product_name = f"{filtered_items_df['NAME_TH'].iloc[0]} {filtered_items_df['MODEL'].iloc[0]} {filtered_items_df['BRAND_NAME'].iloc[0]}"
+        if selected_item['BRAND_NAME'].iloc[0] != '':
+            product_name = f"{selected_item['NAME_TH'].iloc[0]} {selected_item['MODEL'].iloc[0]} {selected_item['BRAND_NAME'].iloc[0]}"
         else:
             product_name = f"{selected_item['NAME_TH'].iloc[0]} {selected_item['MODEL'].iloc[0]} {selected_item['BRAND_NAME'].iloc[0]}"
         
