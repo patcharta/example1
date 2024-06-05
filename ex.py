@@ -327,11 +327,9 @@ def app():
 if __name__ == "__main__":
     app()
 
-# Adding custom CSS to hide Streamlit footer and main menu
+# Adding custom CSS to move "Hosted with Streamlit" to the top left corner
 move_streamlit_style = """
             <style>
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
             .viewerBadge_container__1QSob {
                 position: fixed;
                 top: 0;
