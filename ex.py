@@ -273,7 +273,7 @@ def login_section():
     password = st.text_input("Password", type="password")
     company_options = ['K.G. Corporation Co.,Ltd.', 'The Chill Resort & Spa Co., Ltd.']
     company = st.selectbox("Company", options=company_options)
-    if st.button("Login"):
+    if st.button(" 📥 Login"):
         # Set the selected company to the session state
         st.session_state.company = company
         # Get the connection string based on the selected company
