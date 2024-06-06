@@ -1,3 +1,7 @@
 /* styles.css */
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
+footer {
+    visibility: hidden;
+}
+.viewerBadge_link__1S137 {
+    display: none;
+}
