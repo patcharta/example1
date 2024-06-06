@@ -111,7 +111,7 @@ def load_data(selected_product_name, selected_whcid, conn_str):
     WHERE
         a.EDITDATE IS NULL AND
         a.GRPID IN ('11', '71', '77', '73', '76', '75') AND
-        a.ITMID + ' - ' + a.NAME_TH + ' - ' + a.MODEL = ? AND
+        a.ITMID + ' - ' + a.NAME_TH + ' - ' + a.MODEL + ' - ' + b.BRAND_NAME = ? AND
         p.WHCID = ?
     GROUP BY
         a.ITMID, a.NAME_TH, a.PURCHASING_UOM, a.MODEL,
@@ -148,7 +148,7 @@ def fetch_products(company):
 def select_product(company):
     st.write("ค้นหาสินค้า 🔎")
     items_df = fetch_products(company)
-    items_options = list(items_df['ITMID'] + ' - ' + items_df['NAME_TH'] + ' - ' + items_df['MODEL'])
+    items_options = list(items_df['ITMID'] + ' - ' + items_df['NAME_TH'] + ' - ' + items_df['MODEL'] + ' - ' + items_df['BRAND_NAME'])
     
     # Adding CSS for word wrap
     st.markdown("""
@@ -163,9 +163,10 @@ def select_product(company):
     selected_product_name = st.selectbox("เลือกสินค้า", options=items_options, index=None, key='selected_product')
 
     if selected_product_name:
-        selected_item = items_df[items_df['ITMID'] + ' - ' + items_df['NAME_TH'] + ' - ' + items_df['MODEL'] == selected_product_name]
-        selected_brand_name = selected_item['BRAND_NAME'].iloc[0] if not selected_item.empty else ""
-        st.write(f"คุณเลือกสินค้า: {selected_product_name} - {selected_brand_name}")
+        selected_item = items_df[items_df['ITMID'] + ' - ' + items_df['NAME_TH'] + ' - ' + items_df['MODEL'] + ' - ' + items_df['BRAND_NAME'] == selected_product_name]
+        #selected_brand_name = selected_item['BRAND_NAME'].iloc[0] if not selected_item.empty else ""
+        #st.write(f"คุณเลือกสินค้า: {selected_product_name} - {selected_brand_name}")
+        st.write(f"คุณเลือกสินค้า: {selected_product_name}")
         st.markdown("---")
         return selected_product_name, selected_item
     else:
