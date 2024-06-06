@@ -11,6 +11,12 @@ import re
 # Set page configuration
 st.set_page_config(layout="wide")
 
+def local_css(file_name):
+    with open(file_name) as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+
+local_css("styles.css")
+
 # Function to check user credentials
 @st.cache_data
 def check_credentials(username, password):
