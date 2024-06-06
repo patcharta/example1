@@ -15,7 +15,27 @@ def local_css(file_name):
     with open(file_name) as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
+def hide_streamlit_footer():
+    hide_footer_style = """
+    <style>
+    footer {visibility: hidden;}
+    .viewerBadge_link__1S137 {display: none !important;}
+    .css-1outpf7 {padding: 0;}
+    </style>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var elements = document.getElementsByClassName('viewerBadge_link__1S137');
+        if (elements.length > 0) {
+            elements[0].style.display = 'none';
+        }
+    });
+    </script>
+    """
+    st.markdown(hide_footer_style, unsafe_allow_html=True)
+
+# Load custom CSS
 local_css("styles.css")
+hide_streamlit_footer()
 
 # Function to check user credentials
 @st.cache_data
