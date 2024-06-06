@@ -11,31 +11,6 @@ import re
 # Set page configuration
 st.set_page_config(layout="wide")
 
-def local_css(file_name):
-    with open(file_name) as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-
-def hide_streamlit_badge():
-    hide_badge_style = """
-    <style>
-    footer {visibility: hidden;}
-    .viewerBadge_container__1QSob {display: none !important;}
-    </style>
-    <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        var elements = document.getElementsByClassName('viewerBadge_container__1QSob');
-        if (elements.length > 0) {
-            elements[0].style.display = 'none';
-        }
-    });
-    </script>
-    """
-    st.markdown(hide_badge_style, unsafe_allow_html=True)
-
-# Load custom CSS
-local_css("styles.css")
-hide_streamlit_badge()
-
 # Function to check user credentials
 @st.cache_data
 def check_credentials(username, password):
