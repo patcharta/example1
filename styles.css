@@ -1,7 +1,11 @@
 /* styles.css */
 footer {
     visibility: hidden;
+    height: 0;
 }
 .viewerBadge_link__1S137 {
-    display: none;
+    display: none !important;
+}
+.css-1outpf7 {
+    padding: 0;
 }
