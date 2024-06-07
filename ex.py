@@ -99,7 +99,7 @@ def load_data(selected_product_name, selected_whcid, conn_str):
     SELECT
         a.ITMID, a.NAME_TH, a.PURCHASING_UOM, a.MODEL,
         b.BRAND_NAME, c.CAB_NAME, d.SHE_NAME, e.BLK_NAME,
-        p.WHCID, w.NAME_TH AS WAREHOUSE_NAME, p.BATCH_NO, SUM(p.BALANCE) AS INSTOCK
+        p.WHCID, w.NAME_TH AS WAREHOUSE_NAME, p.BATCH_NO, p.BALANCE AS INSTOCK
     FROM
         ERP_ITEM_MASTER_DATA a
         LEFT JOIN ERP_GOODS_RECEIPT_PO_BATCH p ON a.ITMID = p.ITMID
@@ -113,10 +113,6 @@ def load_data(selected_product_name, selected_whcid, conn_str):
         a.GRPID IN ('11', '71', '77', '73', '76', '75') AND
         a.ITMID + ' - ' + a.NAME_TH + ' - ' + a.MODEL + ' - ' + COALESCE(b.BRAND_NAME, '') = ? AND
         p.WHCID = ?
-    GROUP BY
-        a.ITMID, a.NAME_TH, a.PURCHASING_UOM, a.MODEL,
-        b.BRAND_NAME, c.CAB_NAME, d.SHE_NAME, e.BLK_NAME,
-        p.WHCID, w.NAME_TH, p.BATCH_NO
     '''
     try:
         with pyodbc.connect(conn_str) as conn:
