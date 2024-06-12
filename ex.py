@@ -231,7 +231,7 @@ def count_product(selected_product_name, selected_item, conn_str):
             st.error("กรุณาเลือก 'สถานะ' และ 'สภาพสินค้า' ก่อนบันทึกข้อมูล")
         elif status == "ผสม" and not remark.strip():
             st.error("กรุณาใส่ 'หมายเหตุ' เมื่อเลือกสถานะ 'ผสม'")
-        elif product_quantity > 0:
+        elif product_quantity >= 0:
             timezone = pytz.timezone('Asia/Bangkok')
             current_time = datetime.now(timezone).strftime("%Y-%m-%d %H:%M:%S")
             product_data = {
