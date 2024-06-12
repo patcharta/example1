@@ -7,6 +7,8 @@ import pytz
 import requests
 from bs4 import BeautifulSoup
 import re
+import os
+from PIL import Image
 
 # Set page configuration
 st.set_page_config(layout="wide")
@@ -15,36 +17,20 @@ st.set_page_config(layout="wide")
 @st.cache_data
 def check_credentials(username, password):
     user_db = {
-        'nui': '1234',
-        'pan': '5678',
-        'sand': '9876',
-        'fai': '5432',
-        'io': '1234',
-        'dream': '5678',
-        'tan': '9876',
-        'admin': 'adminpassword',
-        'vasz': '1234'
+        'nui': ('1234', 'regular'),
+        'pan': ('5678', 'regular'),
+        'sand': ('9876', 'regular'),
+        'fai': ('5432', 'regular'),
+        'io': ('1234', 'regular'),
+        'dream': ('5678', 'regular'),
+        'admin1': ('adminpassword', 'regular'),
+        'tan': ('9876', 'special'),
+        'admin': ('adminpassword', 'special'),
+        'vasz': ('1234', 'special')
     }
-    return user_db.get(username.lower()) == password
-
-@st.cache_data
-def get_server_details(company):
-    if company == 'K.G. Corporation Co.,Ltd.':
-        return {
-            'server': '192.168.1.19',
-            'port': '1544', 
-            'db_username': 'sa',
-            'db_password': 'kg@dm1nUsr!',
-            'database': 'KGE'
-        }
-    elif company == 'The Chill Resort & Spa Co., Ltd.':
-        return {
-            'server': '192.168.1.19',
-            'port': '1544',
-            'db_username': 'sa',
-            'db_password': 'kg@dm1nUsr!',
-            'database': 'THECHILL'
-        }
+    user_info = user_db.get(username.lower())
+    if user_info and user_info[0] == password:
+        return user_info[1]
     return None
 
 @st.cache_data
@@ -160,8 +146,6 @@ def select_product(company):
 
     if selected_product_name:
         selected_item = items_df[items_df['ITMID'] + ' - ' + items_df['NAME_TH'] + ' - ' + items_df['MODEL'] + ' - ' + items_df['BRAND_NAME'] == selected_product_name]
-        #selected_brand_name = selected_item['BRAND_NAME'].iloc[0] if not selected_item.empty else ""
-        #st.write(f"คุณเลือกสินค้า: {selected_product_name} - {selected_brand_name}")
         st.write(f"คุณเลือกสินค้า: {selected_product_name}")
         st.markdown("---")
         return selected_product_name, selected_item
@@ -186,21 +170,24 @@ def get_image_url(product_name):
 
 def count_product(selected_product_name, selected_item, conn_str):
     filtered_items_df = load_data(selected_product_name, st.session_state.selected_whcid, conn_str)
-    total_balance = 0  # Ensure total_balance is defined
+    total_balance = 0
 
     if not filtered_items_df.empty:
         st.write("รายละเอียดสินค้า:")
-        # Combine the columns 'CAB_NAME', 'SHE_NAME', and 'BLK_NAME' into a single column
         filtered_items_df['Location'] = filtered_items_df[['CAB_NAME', 'SHE_NAME', 'BLK_NAME']].apply(lambda x: ' / '.join(x.astype(str)), axis=1)
         filtered_items_df_positive_balance = filtered_items_df[filtered_items_df['INSTOCK'] > 0]
 
+        display_columns = ['Location', 'BATCH_NO']
+        if st.session_state.user_role == 'special':
+            display_columns.append('INSTOCK')
+
         if not filtered_items_df_positive_balance.empty:
-            display_columns = ['Location', 'BATCH_NO', 'INSTOCK']
             filtered_items_df_positive_balance = filtered_items_df_positive_balance[display_columns]
             filtered_items_df_positive_balance.index = range(1, len(filtered_items_df_positive_balance) + 1)
             st.dataframe(filtered_items_df_positive_balance)
-            total_balance = filtered_items_df_positive_balance['INSTOCK'].sum()
-            st.write(f"รวมยอดสินค้าในคลัง: {total_balance}")
+            if 'INSTOCK' in display_columns:
+                total_balance = filtered_items_df_positive_balance['INSTOCK'].sum()
+                st.write(f"รวมยอดสินค้าในคลัง: {total_balance}")
         else:
             st.write("ไม่มีสินค้าที่มียอดเหลือในคลัง")
 
@@ -208,22 +195,23 @@ def count_product(selected_product_name, selected_item, conn_str):
             product_name = f"{filtered_items_df['NAME_TH'].iloc[0]} {filtered_items_df['MODEL'].iloc[0]} {filtered_items_df['BRAND_NAME'].iloc[0]}"
         else:
             product_name = f"{selected_item['NAME_TH'].iloc[0]} {selected_item['MODEL'].iloc[0]} {selected_item['BRAND_NAME'].iloc[0]}"
-        
+
         image_url = get_image_url(product_name)
         if image_url:
             st.image(image_url, width=300)
         else:
             st.write("ไม่พบรูปภาพของสินค้า")
-
     else:
         st.warning("ไม่พบข้อมูลสินค้าที่เลือก")
 
-    # Enable quantity and remark input even if there are no products with positive balance
+    if st.session_state.user_role == 'regular' and 'INSTOCK' in filtered_items_df.columns:
+        # Calculate total_balance only if the user is not special (regular)
+        total_balance = filtered_items_df['INSTOCK'].sum()
+    
     product_quantity = st.number_input(label='จำนวนสินค้า 🛒', min_value=0, value=st.session_state.product_quantity)
     status = st.selectbox("สถานะ 📝", ["มือหนึ่ง", "มือสอง", "ผสม", "รอเคลม", "รอคืน", "รอขาย"], index=None)
     condition = st.selectbox("สภาพสินค้า 📝", ["ใหม่", "เก่าเก็บ", "พอใช้ได้", "แย่", "เสียหาย", "ผสม"], index=None)
     remark = st.text_area('หมายเหตุ 💬  \nระบุ สถานะ : ผสม (ใหม่+ของคืน)  \nสภาพสินค้า: ผสม (ใหม่+เก่า+เศษ+อื่นๆ)', value=st.session_state.remark)
-    #remark = st.text_area('หมายเหตุ 💬 ', value=st.session_state.remark)
     st.markdown("---")
 
     if st.button('👉 Enter'):
@@ -275,9 +263,11 @@ def login_section():
         st.session_state.company = company
         # Get the connection string based on the selected company
         conn_str = get_connection_string(company)
-        if check_credentials(username, password):  # Corrected call
+        user_role = check_credentials(username, password)
+        if user_role:
             st.session_state.logged_in = True
             st.session_state.username = username
+            st.session_state.user_role = user_role
             st.success(f"🎉🎉 Welcome {username}")
             time.sleep(1)
             st.experimental_rerun()
