@@ -222,7 +222,8 @@ def count_product(selected_product_name, selected_item, conn_str):
     product_quantity = st.number_input(label='จำนวนสินค้า 🛒', min_value=0, value=st.session_state.product_quantity)
     status = st.selectbox("สถานะ 📝", ["มือหนึ่ง", "มือสอง", "ผสม", "รอเคลม", "รอคืน", "รอขาย"], index=None)
     condition = st.selectbox("สภาพสินค้า 📝", ["ใหม่", "เก่าเก็บ", "พอใช้ได้", "แย่", "เสียหาย", "ผสม"], index=None)
-    remark = st.text_area('หมายเหตุ 💬 ', value=st.session_state.remark)
+    remark = st.text_area('หมายเหตุ 💬 (ระบุ สถานะ : ผสม (ใหม่+ของคืน), สภาพสินค้า: ผสม (ใหม่+เก่า+เศษ+อื่นๆ))', value=st.session_state.remark)
+    #remark = st.text_area('หมายเหตุ 💬 ', value=st.session_state.remark)
     st.markdown("---")
 
     if st.button('👉 Enter'):
