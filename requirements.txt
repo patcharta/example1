@@ -6,4 +6,3 @@ pycryptodome
 configparser
 beautifulsoup4
 requests
-os
