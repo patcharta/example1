@@ -95,7 +95,7 @@ def load_data(selected_product_name, selected_whcid, conn_str):
         LEFT JOIN ERP_BLOCK e ON p.BLKID = e.BLKID
         LEFT JOIN ERP_WAREHOUSES_CODE w ON p.WHCID = w.WHCID
     WHERE
-        a.EDITDATE IS NULL AND
+        a.EDITDATE IS NULL AND b.EDITDATE IS NULL AND c.EDITDATE IS NULL AND d.EDITDATE IS NULL AND e.EDITDATE IS NULL AND p.EDITDATE IS NULL AND
         a.GRPID IN ('11', '71', '77', '73', '76', '75') AND
         a.ITMID + ' - ' + a.NAME_TH + ' - ' + a.MODEL + ' - ' + COALESCE(b.BRAND_NAME, '') = ? AND
         p.WHCID = ?
@@ -118,7 +118,7 @@ def fetch_products(company):
             SELECT x.ITMID, x.NAME_TH, x.MODEL, x.EDITDATE, q.BRAND_NAME
             FROM ERP_ITEM_MASTER_DATA x
             LEFT JOIN ERP_BRAND q ON x.BRAID = q.BRAID
-            WHERE x.EDITDATE IS NULL AND x.GRPID IN ('11', '71', '77', '73', '76', '75')
+            WHERE x.EDITDATE IS NULL AND q.EDITDATE IS NULL AND x.GRPID IN ('11', '71', '77', '73', '76', '75')
             '''
             items_df = pd.read_sql(product_query, conn)
         return items_df.fillna('')
