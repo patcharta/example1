@@ -7,8 +7,7 @@ import pytz
 import requests
 from bs4 import BeautifulSoup
 import re
-import os
-from PIL import Image
+from streamlit_qrcode_scanner import qrcode_scanner
 
 # Set page configuration
 st.set_page_config(layout="wide")
@@ -118,7 +117,8 @@ def fetch_products(company):
             SELECT x.ITMID, x.NAME_TH, x.MODEL, x.EDITDATE, q.BRAND_NAME
             FROM ERP_ITEM_MASTER_DATA x
             LEFT JOIN ERP_BRAND q ON x.BRAID = q.BRAID
-            WHERE x.EDITDATE IS NULL AND q.EDITDATE IS NULL AND x.GRPID IN ('11', '71', '77', '73', '76', '75')
+            WHERE x.EDITDATE IS NULL AND q.EDITDATE IS NULL AND
+            x.GRPID IN ('11', '71', '77', '73', '76', '75')
             '''
             items_df = pd.read_sql(product_query, conn)
         return items_df.fillna('')
@@ -128,21 +128,22 @@ def fetch_products(company):
         st.error(f"Unexpected error: {e}")
 
 def select_product(company):
+    st.write("เลือกวิธีค้นหาสินค้า:")
+    search_method = st.radio("", ["พิมพ์เพื่อค้นหา", "QR เพื่อค้นหา"])
+
+    if search_method == "พิมพ์เพื่อค้นหา":
+        return select_product_by_text(company)
+    elif search_method == "QR เพื่อค้นหา":
+        return select_product_by_qr(company)
+    else:
+        return None, None
+
+def select_product_by_text(company):
     st.write("ค้นหาสินค้า 🔎")
     items_df = fetch_products(company)
     items_options = list(items_df['ITMID'] + ' - ' + items_df['NAME_TH'] + ' - ' + items_df['MODEL'] + ' - ' + items_df['BRAND_NAME'])
-    
-    # Adding CSS for word wrap
-    st.markdown("""
-        <style>
-        .wrap-text .css-1wa3eu0 {
-            white-space: normal !important;
-            overflow-wrap: anywhere;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-    
-    selected_product_name = st.selectbox("เลือกสินค้า", options=items_options, index=None, key='selected_product')
+
+    selected_product_name = st.selectbox("พิมพ์เพื่อค้นหาใน:", options=items_options, index=None, key='selected_product')
 
     if selected_product_name:
         selected_item = items_df[items_df['ITMID'] + ' - ' + items_df['NAME_TH'] + ' - ' + items_df['MODEL'] + ' - ' + items_df['BRAND_NAME'] == selected_product_name]
@@ -207,7 +208,6 @@ def count_product(selected_product_name, selected_item, conn_str):
     if st.session_state.user_role == 'regular' and 'INSTOCK' in filtered_items_df.columns:
         total_balance = filtered_items_df['INSTOCK'].sum()
 
-    # Using text input to accept quantity as string
     product_quantity_str = st.text_input(label='จำนวนสินค้า 🛒', value="")
     status = st.selectbox("สถานะ 📝", ["มือหนึ่ง", "มือสอง", "ผสม", "รอเคลม", "รอคืน", "รอขาย"], index=None)
     condition = st.selectbox("สภาพสินค้า 📝", ["ใหม่", "เก่าเก็บ", "พอใช้ได้", "แย่", "เสียหาย", "ผสม"], index=None)
@@ -254,10 +254,29 @@ def count_product(selected_product_name, selected_item, conn_str):
                     st.session_state.product_quantity = 0
                     st.session_state.remark = ""
                     time.sleep(2)
-                    del st.session_state['selected_product']
+                    if 'selected_product' in st.session_state:
+                        del st.session_state['selected_product']
+                    if 'qr_code_scanner' in st.session_state:
+                        del st.session_state['qr_code_scanner']
                     st.experimental_rerun()
             except ValueError:
                 st.error("กรุณากรอกจำนวนสินค้าที่ถูกต้อง")
+
+def select_product_by_qr(company):
+    st.write("ค้นหาสินค้า 🔍")
+    items_df = fetch_products(company)
+    
+    qr_code = qrcode_scanner(key="qr_code_scanner")
+    if qr_code:
+        st.write(f"QR Code detected: {qr_code}")
+        selected_product = items_df[items_df['ITMID'] == qr_code]
+        if not selected_product.empty:
+            selected_product_name = selected_product.iloc[0]['ITMID'] + ' - ' + selected_product.iloc[0]['NAME_TH'] + ' - ' + selected_product.iloc[0]['MODEL'] + ' - ' + selected_product.iloc[0]['BRAND_NAME']
+            st.write(f"คุณเลือกสินค้า: {selected_product_name}")
+            st.markdown("---")
+            return selected_product_name, selected_product
+
+    return None, None
                 
 def login_section():
     st.write("## Login 🚚")
