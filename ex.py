@@ -30,7 +30,7 @@ def check_credentials(username, password):
         'pooh': ('9876', 'regular'),
         'admin1': ('adminpassword', 'regular'),
         'tan': ('9876', 'special'),
-        'admin': ('adminpassword', 'special'),
+        'patchar': ('adminpassword', 'special'),
         'vasz': ('1234', 'special')
     }
     user_info = user_db.get(username.lower())
