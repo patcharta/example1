@@ -232,17 +232,16 @@ def count_product(selected_product_name, selected_item, conn_str):
                     product_data = {
                         'Time': current_time,
                         'Enter_By': st.session_state.username.upper(),
-                        'Product_ID': str(filtered_items_df['ITMID'].iloc[0] if not filtered_items_df.empty else selected_item['ITMID'].iloc[0]),
-                        'Product_Name': str(filtered_items_df['NAME_TH'].iloc[0] if not filtered_items_df.empty else selected_item['NAME_TH'].iloc[0]),
-                        'Model': str(filtered_items_df['MODEL'].iloc[0] if not filtered_items_df.empty else selected_item['MODEL'].iloc[0]),
-                        'Brand_Name': str(filtered_items_df['BRAND_NAME'].iloc[0] if not filtered_items_df.empty else selected_item['BRAND_NAME'].iloc[0]),
-                        'Cabinet': str(filtered_items_df['CAB_NAME'].iloc[0] if not filtered_items_df.empty else ""),
-                        'Shelf': str(filtered_items_df['SHE_NAME'].iloc[0] if not filtered_items_df.empty else ""),
-                        'Block': str(filtered_items_df['BLK_NAME'].iloc[0] if not filtered_items_df.empty else ""),
+                        'Product_ID': str(filtered_items_df['ITMID'].iloc[0] if not filtered_items_df.empty else None),
+                        'Product_Name': str(filtered_items_df['NAME_TH'].iloc[0] if not filtered_items_df.empty else None),
+                        'Model': str(filtered_items_df['MODEL'].iloc[0] if not filtered_items_df.empty else None),
+                        'Brand_Name': str(filtered_items_df['BRAND_NAME'].iloc[0] if not filtered_items_df.empty else None),
+                        'Cabinet': str(filtered_items_df['CAB_NAME'].iloc[0] if not filtered_items_df.empty else None),
+                        'Shelf': str(filtered_items_df['SHE_NAME'].iloc[0] if not filtered_items_df.empty else None),
+                        'Block': str(filtered_items_df['BLK_NAME'].iloc[0] if not filtered_items_df.empty else None),
                         'Warehouse_ID': str(filtered_items_df['WHCID'].iloc[0] if not filtered_items_df.empty else st.session_state.selected_whcid.split(' -')[0]),
                         'Warehouse_Name': str(filtered_items_df['WAREHOUSE_NAME'].iloc[0] if not filtered_items_df.empty else st.session_state.selected_whcid.split(' -')[1]),
-                        'Batch_No': str(filtered_items_df['BATCH_NO'].iloc[0] if not filtered_items_df.empty else ""),
-                        #'Purchasing_UOM': str(filtered_items_df['PURCHASING_UOM'].iloc[0] if not filtered_items_df.empty else selected_item['PURCHASING_UOM'].iloc[0]),
+                        'Batch_No': str(filtered_items_df['BATCH_NO'].iloc[0] if not filtered_items_df.empty else None),
                         'Purchasing_UOM': str(
                             filtered_items_df['PURCHASING_UOM'].iloc[0]
                             if not filtered_items_df.empty and 'PURCHASING_UOM' in filtered_items_df.columns
