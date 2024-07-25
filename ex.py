@@ -243,7 +243,13 @@ def count_product(selected_product_name, selected_item, conn_str):
                         'Warehouse_Name': str(filtered_items_df['WAREHOUSE_NAME'].iloc[0] if not filtered_items_df.empty else st.session_state.selected_whcid.split(' -')[1]),
                         'Batch_No': str(filtered_items_df['BATCH_NO'].iloc[0] if not filtered_items_df.empty else ""),
                         #'Purchasing_UOM': str(filtered_items_df['PURCHASING_UOM'].iloc[0] if not filtered_items_df.empty else selected_item['PURCHASING_UOM'].iloc[0]),
-                        'Purchasing_UOM': str(filtered_items_df['PURCHASING_UOM'].iloc[0] if not filtered_items_df.empty and 'PURCHASING_UOM' in filtered_items_df.columns else selected_item['PURCHASING_UOM'].iloc[0]),
+                        'Purchasing_UOM': str(
+                            filtered_items_df['PURCHASING_UOM'].iloc[0]
+                            if not filtered_items_df.empty and 'PURCHASING_UOM' in filtered_items_df.columns
+                            else selected_item['PURCHASING_UOM'].iloc[0]
+                            if 'PURCHASING_UOM' in selected_item.columns
+                            else 'Default UOM'
+                        ),
                         'Total_Balance': int(total_balance) if not filtered_items_df.empty else 0,
                         'Quantity': product_quantity,
                         'Remark': remark,
