@@ -254,23 +254,30 @@ def count_product(selected_product_name, selected_item, conn_str):
                         'Status': status,
                         'Condition': condition
                     }
-                    
-                    # Set INSTOCK to 0 if no data found
+
+                    # Ensure that INSTOCK is set to 0 if no data is found
                     if filtered_items_df.empty:
                         product_data['INSTOCK'] = 0
                     else:
                         product_data['INSTOCK'] = filtered_items_df['INSTOCK'].iloc[0]
 
+                    # Print product_data to debug
+                    st.write("Product Data:", product_data)
+                    
                     st.session_state.product_data.append(product_data)
                     save_to_database(product_data, conn_str)
+                    
+                    # Clear session state
                     st.session_state.product_data = []
                     st.session_state.product_quantity = 0
                     st.session_state.remark = ""
+                    
                     time.sleep(2)
                     if 'selected_product' in st.session_state:
                         del st.session_state['selected_product']
                     if 'qr_code_scanner' in st.session_state:
                         del st.session_state['qr_code_scanner']
+                    
                     st.experimental_rerun()
             except ValueError:
                 st.error("กรุณากรอกจำนวนสินค้าที่ถูกต้อง")
