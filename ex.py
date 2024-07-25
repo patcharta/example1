@@ -206,9 +206,7 @@ def count_product(selected_product_name, selected_item, conn_str):
             st.write("ไม่พบรูปภาพของสินค้า")
     else:
         st.warning("ไม่พบข้อมูลสินค้าที่เลือก")
-
-    if st.session_state.user_role == 'regular' and 'INSTOCK' in filtered_items_df.columns:
-        total_balance = filtered_items_df['INSTOCK'].sum()
+        total_balance = 0  # Set total_balance to 0 when no data is found
 
     product_quantity_str = st.text_input(label='จำนวนสินค้า 🛒', value="")
     status = st.selectbox("สถานะ 📝", ["มือหนึ่ง", "มือสอง", "ผสม", "รอเคลม", "รอคืน", "รอขาย"], index=None)
@@ -242,7 +240,6 @@ def count_product(selected_product_name, selected_item, conn_str):
                         'Warehouse_ID': str(filtered_items_df['WHCID'].iloc[0] if not filtered_items_df.empty else st.session_state.selected_whcid.split(' -')[0]),
                         'Warehouse_Name': str(filtered_items_df['WAREHOUSE_NAME'].iloc[0] if not filtered_items_df.empty else st.session_state.selected_whcid.split(' -')[1]),
                         'Batch_No': str(filtered_items_df['BATCH_NO'].iloc[0] if not filtered_items_df.empty else ""),
-                        #'Purchasing_UOM': str(filtered_items_df['PURCHASING_UOM'].iloc[0] if not filtered_items_df.empty else selected_item['PURCHASING_UOM'].iloc[0]),
                         'Purchasing_UOM': str(
                             filtered_items_df['PURCHASING_UOM'].iloc[0]
                             if not filtered_items_df.empty and 'PURCHASING_UOM' in filtered_items_df.columns
@@ -250,7 +247,7 @@ def count_product(selected_product_name, selected_item, conn_str):
                             if 'PURCHASING_UOM' in selected_item.columns
                             else 'Default UOM'
                         ),
-                        'Total_Balance': int(total_balance) if not filtered_items_df.empty else 0,
+                        'Total_Balance': int(total_balance),
                         'Quantity': product_quantity,
                         'Remark': remark,
                         'whcid': filtered_items_df['WHCID'].iloc[0] if not filtered_items_df.empty else st.session_state.selected_whcid.split(' -')[0],
