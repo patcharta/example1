@@ -206,7 +206,9 @@ def count_product(selected_product_name, selected_item, conn_str):
             st.write("ไม่พบรูปภาพของสินค้า")
     else:
         st.warning("ไม่พบข้อมูลสินค้าที่เลือก")
-        total_balance = 0  # Set total_balance to 0 when no data is found
+
+    if st.session_state.user_role == 'regular' and 'INSTOCK' in filtered_items_df.columns:
+        total_balance = filtered_items_df['INSTOCK'].sum()
 
     product_quantity_str = st.text_input(label='จำนวนสินค้า 🛒', value="")
     status = st.selectbox("สถานะ 📝", ["มือหนึ่ง", "มือสอง", "ผสม", "รอเคลม", "รอคืน", "รอขาย"], index=None)
@@ -240,6 +242,7 @@ def count_product(selected_product_name, selected_item, conn_str):
                         'Warehouse_ID': str(filtered_items_df['WHCID'].iloc[0] if not filtered_items_df.empty else st.session_state.selected_whcid.split(' -')[0]),
                         'Warehouse_Name': str(filtered_items_df['WAREHOUSE_NAME'].iloc[0] if not filtered_items_df.empty else st.session_state.selected_whcid.split(' -')[1]),
                         'Batch_No': str(filtered_items_df['BATCH_NO'].iloc[0] if not filtered_items_df.empty else ""),
+                        #'Purchasing_UOM': str(filtered_items_df['PURCHASING_UOM'].iloc[0] if not filtered_items_df.empty else selected_item['PURCHASING_UOM'].iloc[0]),
                         'Purchasing_UOM': str(
                             filtered_items_df['PURCHASING_UOM'].iloc[0]
                             if not filtered_items_df.empty and 'PURCHASING_UOM' in filtered_items_df.columns
@@ -247,37 +250,23 @@ def count_product(selected_product_name, selected_item, conn_str):
                             if 'PURCHASING_UOM' in selected_item.columns
                             else 'Default UOM'
                         ),
-                        'Total_Balance': int(total_balance),
+                        'Total_Balance': int(total_balance) if not filtered_items_df.empty else 0,
                         'Quantity': product_quantity,
                         'Remark': remark,
                         'whcid': filtered_items_df['WHCID'].iloc[0] if not filtered_items_df.empty else st.session_state.selected_whcid.split(' -')[0],
                         'Status': status,
                         'Condition': condition
                     }
-
-                    # Ensure that INSTOCK is set to 0 if no data is found
-                    if filtered_items_df.empty:
-                        product_data['INSTOCK'] = 0
-                    else:
-                        product_data['INSTOCK'] = filtered_items_df['INSTOCK'].iloc[0]
-
-                    # Print product_data to debug
-                    st.write("Product Data:", product_data)
-                    
                     st.session_state.product_data.append(product_data)
                     save_to_database(product_data, conn_str)
-                    
-                    # Clear session state
                     st.session_state.product_data = []
                     st.session_state.product_quantity = 0
                     st.session_state.remark = ""
-                    
                     time.sleep(2)
                     if 'selected_product' in st.session_state:
                         del st.session_state['selected_product']
                     if 'qr_code_scanner' in st.session_state:
                         del st.session_state['qr_code_scanner']
-                    
                     st.experimental_rerun()
             except ValueError:
                 st.error("กรุณากรอกจำนวนสินค้าที่ถูกต้อง")
