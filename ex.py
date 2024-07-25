@@ -254,6 +254,13 @@ def count_product(selected_product_name, selected_item, conn_str):
                         'Status': status,
                         'Condition': condition
                     }
+                    
+                    # Set INSTOCK to 0 if no data found
+                    if filtered_items_df.empty:
+                        product_data['INSTOCK'] = 0
+                    else:
+                        product_data['INSTOCK'] = filtered_items_df['INSTOCK'].iloc[0]
+
                     st.session_state.product_data.append(product_data)
                     save_to_database(product_data, conn_str)
                     st.session_state.product_data = []
