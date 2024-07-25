@@ -259,10 +259,10 @@ def count_product(selected_product_name, selected_item, conn_str):
                         product_data = {
                             'Time': current_time,
                             'Enter_By': st.session_state.username.upper(),
-                            'Product_ID': None,
-                            'Product_Name': None,
-                            'Model': None,
-                            'Brand_Name': None,
+                            'Product_ID': 'default_id',  # ค่า default สำหรับ ITMID
+                            'Product_Name': "None",
+                            'Model': "None",
+                            'Brand_Name': "None",
                             'Cabinet': "None",
                             'Shelf': "None",
                             'Block': "None",
