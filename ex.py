@@ -206,10 +206,9 @@ def count_product(selected_product_name, selected_item, conn_str):
             st.write("ไม่พบรูปภาพของสินค้า")
     else:
         st.warning("ไม่พบข้อมูลสินค้าที่เลือก")
+        total_balance = 0  # Set total_balance to 0 when no data is found
 
-    if st.session_state.user_role == 'regular' and 'INSTOCK' in filtered_items_df.columns:
-        total_balance = filtered_items_df['INSTOCK'].sum()
-
+    # ข้อมูลอื่น ๆ ที่เกี่ยวข้อง
     product_quantity_str = st.text_input(label='จำนวนสินค้า 🛒', value="")
     status = st.selectbox("สถานะ 📝", ["มือหนึ่ง", "มือสอง", "ผสม", "รอเคลม", "รอคืน", "รอขาย"], index=None)
     condition = st.selectbox("สภาพสินค้า 📝", ["ใหม่", "เก่าเก็บ", "พอใช้ได้", "แย่", "เสียหาย", "ผสม"], index=None)
@@ -229,64 +228,54 @@ def count_product(selected_product_name, selected_item, conn_str):
                 else:
                     timezone = pytz.timezone('Asia/Bangkok')
                     current_time = datetime.now(timezone).strftime("%Y-%m-%d %H:%M:%S")
-                    if not filtered_items_df.empty:
-                        product_data = {
-                            'Time': current_time,
-                            'Enter_By': st.session_state.username.upper(),
-                            'Product_ID': str(filtered_items_df['ITMID'].iloc[0]),
-                            'Product_Name': str(filtered_items_df['NAME_TH'].iloc[0]),
-                            'Model': str(filtered_items_df['MODEL'].iloc[0]),
-                            'Brand_Name': str(filtered_items_df['BRAND_NAME'].iloc[0]),
-                            'Cabinet': str(filtered_items_df['CAB_NAME'].iloc[0]),
-                            'Shelf': str(filtered_items_df['SHE_NAME'].iloc[0]),
-                            'Block': str(filtered_items_df['BLK_NAME'].iloc[0]),
-                            'Warehouse_ID': str(filtered_items_df['WHCID'].iloc[0]),
-                            'Warehouse_Name': str(filtered_items_df['WAREHOUSE_NAME'].iloc[0]),
-                            'Batch_No': str(filtered_items_df['BATCH_NO'].iloc[0]),
-                            'Purchasing_UOM': str(
-                                filtered_items_df['PURCHASING_UOM'].iloc[0]
-                                if 'PURCHASING_UOM' in filtered_items_df.columns
-                                else 'Default UOM'
-                            ),
-                            'Total_Balance': int(total_balance),
-                            'Quantity': product_quantity,
-                            'Remark': remark,
-                            'whcid': filtered_items_df['WHCID'].iloc[0],
-                            'Status': status,
-                            'Condition': condition
-                        }
+                    product_data = {
+                        'Time': current_time,
+                        'Enter_By': st.session_state.username.upper(),
+                        'Product_ID': str(filtered_items_df['ITMID'].iloc[0] if not filtered_items_df.empty else selected_item['ITMID'].iloc[0]),
+                        'Product_Name': str(filtered_items_df['NAME_TH'].iloc[0] if not filtered_items_df.empty else selected_item['NAME_TH'].iloc[0]),
+                        'Model': str(filtered_items_df['MODEL'].iloc[0] if not filtered_items_df.empty else selected_item['MODEL'].iloc[0]),
+                        'Brand_Name': str(filtered_items_df['BRAND_NAME'].iloc[0] if not filtered_items_df.empty else selected_item['BRAND_NAME'].iloc[0]),
+                        'Cabinet': str(filtered_items_df['CAB_NAME'].iloc[0] if not filtered_items_df.empty else ""),
+                        'Shelf': str(filtered_items_df['SHE_NAME'].iloc[0] if not filtered_items_df.empty else ""),
+                        'Block': str(filtered_items_df['BLK_NAME'].iloc[0] if not filtered_items_df.empty else ""),
+                        'Warehouse_ID': str(filtered_items_df['WHCID'].iloc[0] if not filtered_items_df.empty else st.session_state.selected_whcid.split(' -')[0]),
+                        'Warehouse_Name': str(filtered_items_df['WAREHOUSE_NAME'].iloc[0] if not filtered_items_df.empty else st.session_state.selected_whcid.split(' -')[1]),
+                        'Batch_No': str(filtered_items_df['BATCH_NO'].iloc[0] if not filtered_items_df.empty else ""),
+                        'Purchasing_UOM': str(
+                            filtered_items_df['PURCHASING_UOM'].iloc[0]
+                            if not filtered_items_df.empty and 'PURCHASING_UOM' in filtered_items_df.columns
+                            else selected_item['PURCHASING_UOM'].iloc[0]
+                            if 'PURCHASING_UOM' in selected_item.columns
+                            else 'Default UOM'
+                        ),
+                        'Total_Balance': int(total_balance),
+                        'Quantity': product_quantity,
+                        'Remark': remark,
+                        'whcid': filtered_items_df['WHCID'].iloc[0] if not filtered_items_df.empty else st.session_state.selected_whcid.split(' -')[0],
+                        'Status': status,
+                        'Condition': condition
+                    }
+
+                    # Ensure INSTOCK is set to 0 when no data is found
+                    if filtered_items_df.empty:
+                        product_data['INSTOCK'] = 0
                     else:
-                        product_data = {
-                            'Time': current_time,
-                            'Enter_By': st.session_state.username.upper(),
-                            'Product_ID': 'default_id',  # ค่า default สำหรับ ITMID
-                            'Product_Name': "None",
-                            'Model': "None",
-                            'Brand_Name': "None",
-                            'Cabinet': "None",
-                            'Shelf': "None",
-                            'Block': "None",
-                            'Warehouse_ID': st.session_state.selected_whcid.split(' -')[0],
-                            'Warehouse_Name': st.session_state.selected_whcid.split(' -')[1],
-                            'Batch_No': "None",
-                            'Purchasing_UOM': 'Default UOM',
-                            'Total_Balance': 0,
-                            'Quantity': product_quantity,
-                            'Remark': remark,
-                            'whcid': st.session_state.selected_whcid.split(' -')[0],
-                            'Status': status,
-                            'Condition': condition
-                        }
+                        product_data['INSTOCK'] = filtered_items_df['INSTOCK'].iloc[0]
+
                     st.session_state.product_data.append(product_data)
                     save_to_database(product_data, conn_str)
+                    
+                    # Clear session state
                     st.session_state.product_data = []
                     st.session_state.product_quantity = 0
                     st.session_state.remark = ""
+                    
                     time.sleep(2)
                     if 'selected_product' in st.session_state:
                         del st.session_state['selected_product']
                     if 'qr_code_scanner' in st.session_state:
                         del st.session_state['qr_code_scanner']
+                    
                     st.experimental_rerun()
             except ValueError:
                 st.error("กรุณากรอกจำนวนสินค้าที่ถูกต้อง")
