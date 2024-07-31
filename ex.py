@@ -304,14 +304,10 @@ def login_section():
             st.session_state.username = username
             st.session_state.user_role = user_role
             st.success(f"🎉🎉 Welcome {username}")
-            st.session_state.run_rerun = True  # Add this line to trigger a rerun
+            time.sleep(1)
+            st.experimental_rerun()
         else:
             st.error("Invalid username or password")
-
-# Add this block outside of any function, ideally at the top level
-if 'run_rerun' in st.session_state and st.session_state.run_rerun:
-    st.session_state.run_rerun = False
-    st.experimental_rerun()
 
 def main_section():
     st.write(f"👨🏻‍💼👩🏻‍💼 รายการสินค้าที่ {st.session_state.username.upper()} นับ")
