@@ -303,13 +303,13 @@ def login_section():
             st.session_state.username = username
             st.session_state.user_role = user_role
             st.success(f"🎉🎉 Welcome {username}")
-            # Sleep to show the success message before rerunning
+            # Sleep to show the success message before redirecting
             time.sleep(1)
-            # Use rerun to navigate to the main section
-            st.experimental_rerun()
+            # Redirect to main section by setting a flag
+            st.session_state.page = 'main'
         else:
             st.error("Invalid username or password")
-
+            
 def main_section():
     st.write(f"👨🏻‍💼👩🏻‍💼 รายการสินค้าที่ {st.session_state.username.upper()} นับ")
     st.write(f"🏭🏭 {st.session_state.company}")
