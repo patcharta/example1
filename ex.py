@@ -305,8 +305,9 @@ def login_section():
             st.success(f"🎉🎉 Welcome {username}")
             # Sleep to show the success message before redirecting
             time.sleep(1)
-            # Redirect to main section by setting a flag
+            # Set page to 'main'
             st.session_state.page = 'main'
+            st.experimental_rerun()  # Refresh the page to show the main section
         else:
             st.error("Invalid username or password")
             
