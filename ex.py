@@ -288,8 +288,6 @@ def select_product_by_qr(company):
     return None, None
 
 def login_section():
-    # Print session state for debugging
-    #st.write("Session state:", st.session_state)
     if 'logged_in' not in st.session_state:
         st.session_state.logged_in = False
 
@@ -312,12 +310,8 @@ def login_section():
                 st.session_state.username = username
                 st.session_state.user_role = user_role
                 st.success(f"🎉🎉 Welcome {username}")
-                time.sleep(1)
-                try:
-                    st.experimental_rerun()
-                except Exception as e:
-                    st.error(f"An error occurred during rerun: {e}")
-                    st.write(f"Debug info: {e}")
+                st.experimental_set_query_params(logged_in="true")
+                # Refresh UI by conditional rendering
             else:
                 st.error("Invalid username or password")
 
