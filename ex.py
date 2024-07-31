@@ -288,32 +288,27 @@ def select_product_by_qr(company):
     return None, None
 
 def login_section():
-    if 'logged_in' not in st.session_state:
-        st.session_state.logged_in = False
-
-    if st.session_state.logged_in:
-        st.success(f"Welcome back, {st.session_state.username}!")
-    else:
-        st.write("## Login 🚚")
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        company_options = ['K.G. Corporation Co.,Ltd.', 'The Chill Resort & Spa Co., Ltd.']
-        company = st.selectbox("Company", options=company_options)
+    st.write("## Login 🚚")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    company_options = ['K.G. Corporation Co.,Ltd.', 'The Chill Resort & Spa Co., Ltd.']
+    company = st.selectbox("Company", options=company_options)
+    
+    if st.button(" 📥 Login"):
+        st.session_state.company = company
+        user_role = check_credentials(username, password)
         
-        if st.button(" 📥 Login"):
-            st.session_state.company = company
-            conn_str = get_connection_string(company)
-            user_role = check_credentials(username, password)
-            
-            if user_role:
-                st.session_state.logged_in = True
-                st.session_state.username = username
-                st.session_state.user_role = user_role
-                st.success(f"🎉🎉 Welcome {username}")
-                st.experimental_set_query_params(logged_in="true")
-                # Refresh UI by conditional rendering
-            else:
-                st.error("Invalid username or password")
+        if user_role:
+            st.session_state.logged_in = True
+            st.session_state.username = username
+            st.session_state.user_role = user_role
+            st.success(f"🎉🎉 Welcome {username}")
+            # Sleep to show the success message before rerunning
+            time.sleep(1)
+            # Use rerun to navigate to the main section
+            st.experimental_rerun()
+        else:
+            st.error("Invalid username or password")
 
 def main_section():
     st.write(f"👨🏻‍💼👩🏻‍💼 รายการสินค้าที่ {st.session_state.username.upper()} นับ")
