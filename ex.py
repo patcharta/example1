@@ -307,7 +307,7 @@ def login_section():
             time.sleep(1)
             # Set page to 'main'
             st.session_state.page = 'main'
-            st.experimental_rerun()  # Refresh the page to show the main section
+            # No need for st.experimental_rerun() here
         else:
             st.error("Invalid username or password")
             
