@@ -267,7 +267,7 @@ def count_product(selected_product_name, selected_item, conn_str):
                         del st.session_state['selected_product']
                     if 'qr_code_scanner' in st.session_state:
                         del st.session_state['qr_code_scanner']
-                    st.experimental_rerun()
+                    st.rerun()
             except ValueError:
                 st.error("กรุณากรอกจำนวนสินค้าที่ถูกต้อง")
 
@@ -327,7 +327,7 @@ def main_section():
                 selected_whcid = st.selectbox("เลือก WHCID:", options=whcid_df['WHCID'] + ' - ' + whcid_df['NAME_TH'])
                 if st.button("👉 Enter WHCID"):
                     st.session_state.selected_whcid = selected_whcid
-                    st.experimental_rerun()
+                    st.rerun()
         except pyodbc.Error as e:
             st.error(f"Error connecting to the database: {e}")
     else:
@@ -345,7 +345,7 @@ def main_section():
             st.session_state.product_data = []
             st.session_state.product_quantity = 0
             st.session_state.remark = ""
-            st.experimental_rerun()
+            st.rerun()
 
 def app():
     if 'logged_in' not in st.session_state:
