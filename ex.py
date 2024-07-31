@@ -308,7 +308,7 @@ def login_section():
         else:
             st.error("Invalid username or password")
 
-# Add this block outside of any function
+# Add this block outside of any function, ideally at the top level
 if 'run_rerun' in st.session_state and st.session_state.run_rerun:
     st.session_state.run_rerun = False
     st.experimental_rerun()
