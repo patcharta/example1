@@ -293,24 +293,22 @@ def login_section():
     password = st.text_input("Password", type="password")
     company_options = ['K.G. Corporation Co.,Ltd.', 'The Chill Resort & Spa Co., Ltd.']
     company = st.selectbox("Company", options=company_options)
-    
     if st.button(" 📥 Login"):
+        # Set the selected company to the session state
         st.session_state.company = company
+        # Get the connection string based on the selected company
+        conn_str = get_connection_string(company)
         user_role = check_credentials(username, password)
-        
         if user_role:
             st.session_state.logged_in = True
             st.session_state.username = username
             st.session_state.user_role = user_role
             st.success(f"🎉🎉 Welcome {username}")
-            # Sleep to show the success message before redirecting
             time.sleep(1)
-            # Set page to 'main'
-            st.session_state.page = 'main'
-            # No need for st.experimental_rerun() here
+            st.experimental_rerun()
         else:
             st.error("Invalid username or password")
-            
+
 def main_section():
     st.write(f"👨🏻‍💼👩🏻‍💼 รายการสินค้าที่ {st.session_state.username.upper()} นับ")
     st.write(f"🏭🏭 {st.session_state.company}")
