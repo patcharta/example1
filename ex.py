@@ -289,7 +289,7 @@ def select_product_by_qr(company):
 
 def login_section():
     # Print session state for debugging
-    st.write("Session state:", st.session_state)
+    #st.write("Session state:", st.session_state)
     if 'logged_in' not in st.session_state:
         st.session_state.logged_in = False
 
