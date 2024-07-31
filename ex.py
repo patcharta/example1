@@ -305,7 +305,7 @@ def login_section():
             st.session_state.user_role = user_role
             st.success(f"🎉🎉 Welcome {username}")
             time.sleep(1)
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("Invalid username or password")
 
