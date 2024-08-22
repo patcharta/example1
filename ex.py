@@ -28,6 +28,8 @@ def check_credentials(username, password):
         'pui': ('pui789', 'special'),
         'beer': ('beer456', 'special'),
         'joy': ('joy159', 'special'),
+        'p'pang': ('pang456', 'special'),
+        'smile': ('smile321', 'special'),
         'tan': ('9876', 'special'),
         'patchar': ('adminpassword', 'special'),
         'vasz': ('1234', 'special')
