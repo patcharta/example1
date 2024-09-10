@@ -16,24 +16,31 @@ st.set_page_config(layout="wide")
 @st.cache_data
 def check_credentials(username, password):
     user_db = {
-        'nui': ('1234', 'regular'),
-        'pan': ('5678', 'regular'),
-        'sand': ('9876', 'regular'),
-        'fai': ('5432', 'regular'),
-        'io': ('1234', 'regular'),
-        'dream': ('5678', 'regular'),
-        'admin1': ('adminpassword', 'regular'),
-        'jeab': ('jeab123', 'special'),
-        'sai': ('sai543', 'special'),
-        'pui': ('pui789', 'special'),
-        'beer': ('beer456', 'special'),
-        'joy': ('joy159', 'special'),
-        'pang': ('pang456', 'special'),
-        'smile': ('smile321', 'special'),
-        'tan': ('9876', 'special'),
-        'patchar': ('adminpassword', 'special'),
-        'vasz': ('1234', 'special')
-    }
+    'nui': ('1234', 'regular'),
+    'pan': ('5678', 'regular'),
+    'sand': ('9876', 'regular'),
+    'fai': ('5432', 'regular'),
+    'io': ('1234', 'regular'),
+    'dream': ('5678', 'regular'),
+    'admin1': ('adminpassword', 'regular'),
+    'jeab': ('jeab123', 'special'),
+    'sai': ('sai543', 'special'),
+    'pui': ('pui789', 'special'),
+    'beer': ('beer456', 'special'),
+    'joy': ('joy159', 'special'),
+    'pang': ('pang456', 'special'),
+    'smile': ('smile321', 'special'),
+    'tan': ('9876', 'special'),
+    'patchar': ('adminpassword', 'special'),
+    'vasz': ('1234', 'special'),
+    # New regular users
+    'keng': ('1234', 'regular'),
+    'tap': ('9876', 'regular'),
+    'kwang': ('5432', 'regular'),
+    'yo': ('4321', 'regular'),
+    'non': ('4567', 'regular'),
+    'pooh': ('9876', 'regular')
+}
     user_info = user_db.get(username.lower())
     if user_info and user_info[0] == password:
         return user_info[1]
