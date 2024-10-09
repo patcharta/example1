@@ -94,6 +94,7 @@ def save_to_database(product_data, conn_str):
 
 @st.cache_data
 def load_data(selected_product_name, selected_whcid, conn_str):
+    # ดึงข้อมูลจากฐานข้อมูล SQL
     query_detail = '''
     SELECT
         a.ITMID, a.NAME_TH, a.PURCHASING_UOM, a.MODEL,
@@ -118,9 +119,22 @@ def load_data(selected_product_name, selected_whcid, conn_str):
             filtered_items_df = pd.read_sql(query_detail, conn, params=(selected_product_name, selected_whcid.split(' -')[0]))
         return filtered_items_df
     except pyodbc.Error as e:
-        st.error(f"Error loading data: {e}")
+        st.error(f"เกิดข้อผิดพลาดในการโหลดข้อมูล: {e}")
     except Exception as e:
-        st.error(f"Unexpected error: {e}")
+        st.error(f"เกิดข้อผิดพลาดที่ไม่คาดคิด: {e}")
+
+# เช็ควันที่ล่าสุดที่อัพเดตข้อมูล
+if "last_update_date" not in st.session_state:
+    st.session_state["last_update_date"] = datetime.now().date()
+
+# ถ้าวันนี้ไม่ตรงกับวันที่ล่าสุดที่อัพเดต ให้ดึงข้อมูลใหม่
+if datetime.now().date() != st.session_state["last_update_date"]:
+    st.session_state["last_update_date"] = datetime.now().date()
+    st.experimental_rerun()
+
+# เรียกใช้ฟังก์ชันดึงข้อมูล
+data = load_data(selected_product_name, selected_whcid, conn_str)
+st.write(data)
 
 @st.cache_data
 def fetch_products(company):
