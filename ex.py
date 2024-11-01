@@ -39,6 +39,7 @@ def check_credentials(username, password):
     'kwang': ('5432', 'regular'),
     'yo': ('4321', 'regular'),
     'non': ('4567', 'regular'),
+    'art': ('4321', 'regular'),
     'pooh': ('9876', 'regular')
 }
     user_info = user_db.get(username.lower())
